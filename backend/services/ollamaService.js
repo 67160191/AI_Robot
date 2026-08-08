@@ -84,23 +84,23 @@ function getSystemPrompt() {
     .join("\n");
 
   _cachedPrompt = `คุณคือ AI ผู้ช่วยควบคุมเครื่องจักรในโรงงาน
-หน้าที่คือแปลงคำสั่งภาษาไทยหรืออังกฤษเป็น JSON Command เดียวเท่านั้น
+หน้าที่: แปลงคำสั่งภาษาไทยหรืออังกฤษ → JSON เดียว ห้ามตอบข้อความอื่น
 
-อุปกรณ์ในระบบ:
+อุปกรณ์ในระบบ (device id):
 - conveyor1: สายพาน 1
 - conveyor2: สายพาน 2
 - motor1: มอเตอร์หลัก
 - pump1: ปั๊มน้ำหล่อเย็น
 - fan1: พัดลมระบายความร้อน
 - robot1: หุ่นยนต์แขนกล
-- agv1: รถ AGV ลำเลียง
+- agv1: รถ AGV
 - heater1: ฮีตเตอร์เตาอบ
 - compressor1: เครื่องปั๊มลม
 - crane1: เครนยกสินค้า
 - light1: ไฟสัญญาณเตือน
 - chiller1: เครื่องทำความเย็น
 
-Actions: start|stop|set_speed(params.speed:0-100)|emergency_stop|reset
+Actions ที่ใช้ได้: start | stop | set_speed | emergency_stop | reset
 
 ชื่อเรียกอื่น ๆ ของอุปกรณ์:
 ${deviceAliasList || "  (ยังไม่มี)"}
@@ -111,14 +111,24 @@ ${actionAliasList || "  (ยังไม่มี)"}
 คำสั่งลัดที่กำหนดเอง:
 ${customCmdList || "  (ยังไม่มี)"}
 
-กฎ: ตอบ JSON เดียว ห้ามมีข้อความอื่น
-รูปแบบ: {"device":"id","action":"action","params":{},"message":"ข้อความไทย"}
-ถ้าไม่ใช่คำสั่งควบคุม: {"device":null,"action":"chat","message":"ตอบกลับ"}
+กฎสำคัญ:
+1. ตอบเป็น JSON เดียว ห้ามมีข้อความอื่นนอก JSON
+2. รูปแบบ: {"device":"<id>","action":"<action>","params":{},"message":"<ข้อความยืนยันภาษาไทย>"}
+3. ถ้าไม่ใช่คำสั่งควบคุม: {"device":null,"action":"chat","params":{},"message":"<ตอบกลับ>"}
+4. ค่าความเร็ว (params.speed): ดึงตัวเลขจากคำสั่ง เช่น "80%" หรือ "80" ให้ speed=80
+   - ถ้ามีชื่ออุปกรณ์มีเลข เช่น "สายพาน 1" ให้ใช้เลขหลัง (80) ไม่ใช่เลขในชื่ออุปกรณ์ (1)
+   - ตัวอย่าง: "สายพาน 1 ความเร็ว 80" → speed=80 (ไม่ใช่ 1)
+5. ระบุ device id ให้ตรงที่สุด (conveyor1 vs conveyor2)
 
 ตัวอย่าง:
 "เปิดสายพาน 1" → {"device":"conveyor1","action":"start","params":{},"message":"เปิดสายพาน 1 แล้ว"}
 "หยุดมอเตอร์" → {"device":"motor1","action":"stop","params":{},"message":"หยุดมอเตอร์แล้ว"}
-"ตั้งพัดลม 80%" → {"device":"fan1","action":"set_speed","params":{"speed":80},"message":"ตั้งพัดลม 80%"}`;
+"ตั้งพัดลม 80%" → {"device":"fan1","action":"set_speed","params":{"speed":80},"message":"ตั้งพัดลม 80%"}
+"สายพาน 1 ความเร็ว 80" → {"device":"conveyor1","action":"set_speed","params":{"speed":80},"message":"ตั้งความเร็วสายพาน 1 เป็น 80%"}
+"สายพาน 2 ปรับความเร็ว 60" → {"device":"conveyor2","action":"set_speed","params":{"speed":60},"message":"ตั้งความเร็วสายพาน 2 เป็น 60%"}
+"ปิดสายพาน 2" → {"device":"conveyor2","action":"stop","params":{},"message":"ปิดสายพาน 2 แล้ว"}
+"หยุดฉุกเฉิน" → {"device":null,"action":"emergency_stop","params":{},"message":"หยุดฉุกเฉินทุกเครื่อง"}`;
+
 
   console.log("📝 System prompt cache refreshed");
   return _cachedPrompt;
@@ -166,12 +176,17 @@ async function parseCommand(userMessage, forceModel = null) {
         stream: false,
         format: "json",
         keep_alive: KEEP_ALIVE,
-        options: { temperature: 0.1, num_predict: 40, num_ctx: 512 }
+        options: { temperature: 0, num_predict: 80, num_ctx: 512 }
       },
       { timeout: 60000 }
     );
 
-    const content = response.data.message.content.trim();
+    const rawContent = response?.data?.message?.content;
+    if (!rawContent || typeof rawContent !== "string") {
+      throw new Error("AI ตอบกลับเป็นค่าว่าง");
+    }
+
+    const content = rawContent.trim();
     console.log(`📨 AI raw response: ${content}`);
 
     // Extract JSON แรกเสมอ (ป้องกัน AI ตอบหลาย JSON)
@@ -182,9 +197,24 @@ async function parseCommand(userMessage, forceModel = null) {
     if (firstClose === -1) throw new Error("JSON ไม่สมบูรณ์");
 
     const parsed = JSON.parse(content.slice(firstBrace, firstClose + 1));
-    parsed.model  = selectedModel;
-    parsed.source = "ollama";
-    return { success: true, data: parsed };
+
+    // รับประกันว่า parsed มีค่าที่จำเป็นครบถ้วน
+    const safeResult = {
+      device:  parsed.device || null,
+      action:  parsed.action || "chat",
+      params:  (parsed.params && typeof parsed.params === "object") ? parsed.params : {},
+      message: parsed.message || `ได้รับคำสั่ง: ${userMessage}`,
+      model:   selectedModel,
+      source:  "ollama"
+    };
+
+    // ตรวจค่า speed เป็นตัวเลขจริง
+    if (safeResult.params.speed !== undefined) {
+      const spd = parseInt(safeResult.params.speed, 10);
+      safeResult.params.speed = isNaN(spd) ? 50 : Math.max(0, Math.min(100, spd));
+    }
+
+    return { success: true, data: safeResult };
 
   } catch (error) {
     console.error("Ollama error:", error.message);
@@ -204,18 +234,23 @@ function findMatchingClose(str, start) {
 
 // Rule-based fallback — ใช้ vocabularyService
 function fallbackParse(message) {
-  const vocabResult = vocabService.searchVocab(message);
-  if (vocabResult.found) {
-    return {
-      success: true,
-      data: {
-        device:  vocabResult.device,
-        action:  vocabResult.action,
-        params:  vocabResult.params || {},
-        message: vocabResult.message,
-        model:   `fallback:${vocabResult.source}`
-      }
-    };
+  try {
+    const vocabResult = vocabService.searchVocab(message);
+    if (vocabResult && vocabResult.found) {
+      return {
+        success: true,
+        data: {
+          device:  vocabResult.device || null,
+          action:  vocabResult.action || "chat",
+          params:  vocabResult.params || {},
+          message: vocabResult.message || `พบคำสั่ง: ${message}`,
+          model:   `fallback:${vocabResult.source || 'unknown'}`,
+          source:  "fallback"
+        }
+      };
+    }
+  } catch (err) {
+    console.error("Fallback parse error:", err.message);
   }
 
   return {
@@ -223,8 +258,10 @@ function fallbackParse(message) {
     data: {
       device:  null,
       action:  "chat",
+      params:  {},
       message: "⚠️ ไม่เข้าใจคำสั่งนี้ กรุณาลองพิมพ์ใหม่ หรือเพิ่มคำใน 📚 คลังคำสั่ง",
-      model:   "fallback:no-match"
+      model:   "fallback:no-match",
+      source:  "fallback"
     }
   };
 }

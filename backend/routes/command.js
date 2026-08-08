@@ -16,72 +16,81 @@ const vocabService   = require("../services/vocabularyService");
 // Frontend แสดง confirm → ถ้า confirm ค่อย call /execute
 // ─────────────────────────────────────────────────────────
 router.post("/", async (req, res) => {
-  const { message, model: requestedModel } = req.body;
-  if (!message?.trim()) return res.status(400).json({ error: "กรุณาระบุคำสั่ง" });
+  try {
+    const { message, model: requestedModel } = req.body;
+    if (!message?.trim()) return res.status(400).json({ error: "กรุณาระบุคำสั่ง" });
 
-  console.log(`\n📩 Parse command: "${message}" | model: ${requestedModel || "auto"}`);
+    console.log(`\n📩 Parse command: "${message}" | model: ${requestedModel || "auto"}`);
 
-  // ── ⚡ Vocab-First: ตรวจ vocab ก่อน ส่งไป AI ──────────────────
-  // ถ้า match → return ทันที (~0ms) ไม่ต้องเรียก Ollama เลย
-  const vocabResult = vocabService.searchVocab(message);
-  if (vocabResult.found) {
-    console.log(`⚡ Vocab-first match: ${vocabResult.device} / ${vocabResult.action} (${vocabResult.source})`);
+    // ── ⚡ Vocab-First: ตรวจ vocab ก่อน ส่งไป AI ──────────────────
+    // ถ้า match → return ทันที (~0ms) ไม่ต้องเรียก Ollama เลย
+    const vocabResult = vocabService.searchVocab(message);
+    if (vocabResult && vocabResult.found) {
+      console.log(`⚡ Vocab-first match: ${vocabResult.device} / ${vocabResult.action} (${vocabResult.source})`);
+      const record = historyService.add({
+        userMessage: message,
+        aiMessage:   vocabResult.message || `${vocabResult.action} ${vocabResult.device}`,
+        device:      vocabResult.device,
+        action:      vocabResult.action,
+        params:      vocabResult.params || {},
+        model:       `vocab:${vocabResult.source}`,
+        source:      "vocab",
+        executed:    false,
+        success:     null
+      });
+      return res.json({
+        id:          record.id,
+        userMessage: message,
+        aiMessage:   vocabResult.message || `${vocabResult.action} ${vocabResult.device}`,
+        device:      vocabResult.device,
+        action:      vocabResult.action,
+        params:      vocabResult.params || {},
+        model:       `vocab:${vocabResult.source}`,
+        source:      "vocab",
+        timestamp:   record.timestamp
+      });
+    }
+    // ────────────────────────────────────────────────────────────
+
+    const aiResult = await ollamaService.parseCommand(message, requestedModel || null);
+    if (!aiResult || !aiResult.success) {
+      return res.status(500).json({ error: "AI ประมวลผลไม่ได้", details: aiResult?.error || "unknown" });
+    }
+
+    const data = aiResult.data || {};
+    const { device, action, params, message: aiMessage, model, source } = data;
+
+    // บันทึก history (ยังไม่ execute)
     const record = historyService.add({
       userMessage: message,
-      aiMessage:   vocabResult.message,
-      device:      vocabResult.device,
-      action:      vocabResult.action,
-      params:      vocabResult.params || {},
-      model:       `vocab:${vocabResult.source}`,
-      source:      "vocab",
+      aiMessage:   aiMessage || `${action || 'chat'} ${device || ''}`.trim(),
+      device:      device || null,
+      action:      action || "chat",
+      params:      params || {},
+      model:       model || "unknown",
+      source:      source || "ai",
       executed:    false,
       success:     null
     });
-    return res.json({
-      id:          record.id,
+
+    res.json({
+      id: record.id,
       userMessage: message,
-      aiMessage:   vocabResult.message,
-      device:      vocabResult.device,
-      action:      vocabResult.action,
-      params:      vocabResult.params || {},
-      model:       `vocab:${vocabResult.source}`,
-      source:      "vocab",
+      aiMessage:   aiMessage || `${action || 'chat'} ${device || ''}`.trim(),
+      device:      device || null,
+      action:      action || "chat",
+      params:      params || {},
+      model:       model || "unknown",
+      source:      source || "ai",
       timestamp:   record.timestamp
     });
+  } catch (err) {
+    console.error("❌ POST /api/command unhandled error:", err);
+    res.status(500).json({
+      error: "เกิดข้อผิดพลาดภายในระบบ",
+      details: err.message || "unknown"
+    });
   }
-  // ────────────────────────────────────────────────────────────
-
-  const aiResult = await ollamaService.parseCommand(message, requestedModel || null);
-  if (!aiResult.success) {
-    return res.status(500).json({ error: "AI ประมวลผลไม่ได้", details: aiResult.error });
-  }
-
-  const { device, action, params, message: aiMessage, model, source } = aiResult.data;
-
-  // บันทึก history (ยังไม่ execute)
-  const record = historyService.add({
-    userMessage: message,
-    aiMessage,
-    device,
-    action,
-    params,
-    model,
-    source: source || "ai",
-    executed: false,
-    success: null
-  });
-
-  res.json({
-    id: record.id,
-    userMessage: message,
-    aiMessage,
-    device,
-    action,
-    params,
-    model,
-    source,
-    timestamp: record.timestamp
-  });
 });
 
 

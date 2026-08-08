@@ -57,30 +57,32 @@ export default function ChatPanel({ onCommandResult, selectedModel }) {
       const result = await api.sendCommand(text, selectedModel);
 
       if (!result.success) {
-        addMessage({ role: 'ai', content: `❌ เกิดข้อผิดพลาด: ${result.error}`, isError: true });
+        addMessage({ role: 'ai', content: `❌ เกิดข้อผิดพลาด: ${result.error || 'ไม่ทราบสาเหตุ'}`, isError: true });
         return;
       }
 
-      const { id, device, action, params, aiMessage, model, source } = result.data;
+      const data = result.data || {};
+      const { id, device, action, params, aiMessage, model, source } = data;
+      const safeMessage = aiMessage || (device ? `${action || 'command'} → ${device}` : 'ได้รับคำสั่งแล้ว');
 
-      if (device && action !== 'chat') {
+      if (device && action && action !== 'chat') {
         // มีคำสั่งควบคุม → แสดง confirm (ยังไม่ execute)
         addMessage({
           role: 'ai',
-          content: aiMessage,
+          content: safeMessage,
           isPending: true,
           pendingId: id,
-          device, action, params,
+          device, action, params: params || {},
           model, source
         });
       } else {
-        addMessage({ role: 'ai', content: aiMessage });
+        addMessage({ role: 'ai', content: safeMessage });
       }
 
-      onCommandResult?.(result.data, false);
+      onCommandResult?.(data, false);
 
     } catch (err) {
-      addMessage({ role: 'ai', content: `❌ ${err.message}`, isError: true });
+      addMessage({ role: 'ai', content: `❌ ${err.message || 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ'}`, isError: true });
     } finally {
       setIsLoading(false);
       inputRef.current?.focus();
@@ -91,17 +93,22 @@ export default function ChatPanel({ onCommandResult, selectedModel }) {
   const handleConfirm = async (msgId, { pendingId, device, action, params }) => {
     updateMessage(msgId, { isPending: false, isConfirming: true });
 
-    const result = await api.executeCommand({ id: pendingId, device, action, params });
+    try {
+      const result = await api.executeCommand({ id: pendingId, device, action, params: params || {} });
 
-    if (result.success) {
-      const execMsg = result.data.machineResult?.message || `${action} ${device} สำเร็จ`;
-      updateMessage(msgId, { isConfirming: false, isConfirmed: true });
-      addMessage({ role: 'ai', content: `✅ ${execMsg}`, isSuccess: true });
-      // Refresh dashboard ทันที
-      onCommandResult?.({ device, action, params, machineResult: result.data.machineResult }, true);
-    } else {
+      if (result.success) {
+        const execMsg = result.data?.machineResult?.message || `${action} ${device} สำเร็จ`;
+        updateMessage(msgId, { isConfirming: false, isConfirmed: true });
+        addMessage({ role: 'ai', content: `✅ ${execMsg}`, isSuccess: true });
+        // Refresh dashboard ทันที
+        onCommandResult?.({ device, action, params, machineResult: result.data?.machineResult }, true);
+      } else {
+        updateMessage(msgId, { isConfirming: false, isPending: false });
+        addMessage({ role: 'ai', content: `❌ Execute ล้มเหลว: ${result.error || 'ไม่ทราบสาเหตุ'}`, isError: true });
+      }
+    } catch (err) {
       updateMessage(msgId, { isConfirming: false, isPending: false });
-      addMessage({ role: 'ai', content: `❌ Execute ล้มเหลว: ${result.error}`, isError: true });
+      addMessage({ role: 'ai', content: `❌ เกิดข้อผิดพลาด: ${err.message || 'ไม่ทราบสาเหตุ'}`, isError: true });
     }
   };
 
@@ -158,7 +165,7 @@ export default function ChatPanel({ onCommandResult, selectedModel }) {
                 ${msg.isSuccess ? 'success' : ''}
                 ${msg.isWarning ? 'warning' : ''}`}>
 
-                {msg.content.split('\n').map((line, i, arr) => (
+                {(msg.content || '').split('\n').map((line, i, arr) => (
                   <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
                 ))}
 
