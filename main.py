@@ -18,7 +18,7 @@ PROJECT_DIR   = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_URL  = "http://localhost:5173"         # URL ที่จะเปิดใน browser (frontend)
 BACKEND_URL   = "http://localhost:3001/health"   # ใช้ตรวจสอบว่า backend พร้อมแล้ว
 FRONTEND_PORT = 5173                             # port ของ frontend dev server
-OLLAMA_URL    = "http://10.80.80.241:8080"       # AI model server (ใช้ตรวจสอบการเชื่อมต่อ)
+OLLAMA_URL    = "http://10.80.84.24:11434"        # AI model server (ใช้ตรวจสอบการเชื่อมต่อ)
 
 # สีสำหรับ console (รองรับ Windows ด้วย)
 try:

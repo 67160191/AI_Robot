@@ -4,7 +4,7 @@
   "description": "AI Robot Operator - ระบบควบคุมเครื่องจักรด้วย AI",
   "scripts": {
     "dev": "concurrently --prefix-colors \"cyan,yellow,magenta\" --names \"OLLAMA,BACKEND,FRONTEND\" --kill-others-on-fail false \"npm run ollama\" \"npm run backend\" \"npm run frontend\"",
-    "ollama": "ollama serve || echo [OLLAMA already running - OK]",
+    "ollama": "echo [OLLAMA remote: 10.80.84.24:11434 - skipping local serve]",
     "backend": "node backend/server.js",
     "frontend": "npm run dev --prefix frontend",
     "install:all": "npm install --prefix backend && npm install --prefix frontend",

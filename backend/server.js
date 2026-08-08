@@ -4,7 +4,9 @@
 
 const express = require("express");
 const cors = require("cors");
-const commandRouter = require("./routes/command");
+const commandRouter   = require("./routes/command");
+const ollamaService   = require("./services/ollamaService");
+
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -29,7 +31,7 @@ app.get("/health", (req, res) => {
     status: "ok",
     service: "AI Robot Operator Backend",
     timestamp: new Date().toISOString(),
-    ollama: "http://localhost:11434",
+    ollama: process.env.OLLAMA_URL || "http://10.80.84.24:11434",
     version: "1.0.0"
   });
 });
@@ -65,13 +67,17 @@ app.listen(PORT, () => {
   console.log("║   🤖 AI Robot Operator Backend       ║");
   console.log("╚══════════════════════════════════════╝");
   console.log(`✅ Server running at http://localhost:${PORT}`);
-  console.log(`🤖 Ollama URL: http://localhost:11434`);
+  console.log(`🤖 Ollama URL: ${process.env.OLLAMA_URL || "http://10.80.84.24:11434"}`);
   console.log(`📡 MQTT: ${process.env.MQTT_BROKER || "mqtt://localhost:1883"}`);
   console.log(`\nEndpoints:`);
   console.log(`  POST http://localhost:${PORT}/api/command`);
   console.log(`  GET  http://localhost:${PORT}/api/command/status`);
   console.log(`  GET  http://localhost:${PORT}/api/command/history`);
   console.log(`  GET  http://localhost:${PORT}/api/command/models\n`);
+
+  // 🔥 Warm-up: โหลด model เข้า memory ล่วงหน้า
+  setTimeout(() => ollamaService.warmUp(), 2000);
 });
+
 
 module.exports = app;

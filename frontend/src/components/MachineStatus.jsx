@@ -35,7 +35,7 @@ function TempGauge({ value, max = 100 }) {
   );
 }
 
-function SpeedGauge({ value }) {
+function MetricGauge({ value, unit = "%" }) {
   const pct = Math.min(value, 100);
   return (
     <div className="speed-ring-wrap">
@@ -54,16 +54,29 @@ function SpeedGauge({ value }) {
       </svg>
       <div className="speed-ring-label">
         <span className="speed-val mono">{pct}</span>
-        <span className="speed-unit">%</span>
+        <span className="speed-unit" style={{ fontSize: unit.length > 2 ? '9px' : '11px' }}>{unit}</span>
       </div>
     </div>
   );
+}
+
+function getMetricIcon(metricName = '') {
+  if (metricName.includes('ร้อน')) return '🔥';
+  if (metricName.includes('แรงดัน')) return '💨';
+  if (metricName.includes('สว่าง') || metricName.includes('ไฟ')) return '💡';
+  if (metricName.includes('เย็น')) return '❄️';
+  if (metricName.includes('ไหล')) return '💧';
+  if (metricName.includes('ลม')) return '🌀';
+  if (metricName.includes('รอก')) return '🏗️';
+  return '⚡';
 }
 
 function MachineCard({ machine, onControl }) {
   const isRunning = machine.status === 'running';
   const isWarning = machine.status === 'warning';
   const isError = machine.status === 'error';
+  const metricLabel = machine.metricName || 'ความเร็ว';
+  const unit = machine.unit || '%';
 
   return (
     <div className={`machine-card glass-card ${machine.status}`}>
@@ -89,8 +102,8 @@ function MachineCard({ machine, onControl }) {
           <TempGauge value={machine.temp} />
         </div>
         <div className="metric metric-speed">
-          <span className="metric-label">⚡ ความเร็ว</span>
-          <SpeedGauge value={machine.speed} />
+          <span className="metric-label">{getMetricIcon(metricLabel)} {metricLabel}</span>
+          <MetricGauge value={machine.speed} unit={unit} />
         </div>
       </div>
 

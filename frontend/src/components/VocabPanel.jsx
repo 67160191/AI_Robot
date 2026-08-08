@@ -6,12 +6,18 @@ import { api } from '../services/api';
 import './VocabPanel.css';
 
 const DEVICES = [
-  { id: 'conveyor1', label: '🏭 สายพาน 1' },
-  { id: 'conveyor2', label: '🏭 สายพาน 2' },
-  { id: 'motor1',   label: '⚙️ มอเตอร์หลัก' },
-  { id: 'pump1',    label: '💧 ปั๊มน้ำ' },
-  { id: 'fan1',     label: '🌀 พัดลม' },
-  { id: 'robot1',   label: '🦾 หุ่นยนต์' },
+  { id: 'conveyor1',   label: '🏭 สายพาน 1' },
+  { id: 'conveyor2',   label: '🏭 สายพาน 2' },
+  { id: 'motor1',      label: '⚙️ มอเตอร์หลัก' },
+  { id: 'pump1',       label: '💧 ปั๊มน้ำ' },
+  { id: 'fan1',        label: '🌀 พัดลม' },
+  { id: 'robot1',      label: '🦾 หุ่นยนต์' },
+  { id: 'agv1',        label: '🚜 รถ AGV' },
+  { id: 'heater1',     label: '♨️ ฮีตเตอร์เตาอบ' },
+  { id: 'compressor1', label: '💨 เครื่องปั๊มลม' },
+  { id: 'crane1',      label: '🏗️ เครนยกสินค้า' },
+  { id: 'light1',      label: '🚨 ไฟสัญญาณเตือน' },
+  { id: 'chiller1',    label: '❄️ เครื่องทำความเย็น' },
 ];
 
 const ACTIONS = [

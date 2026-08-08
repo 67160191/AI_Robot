@@ -21,6 +21,36 @@ router.post("/", async (req, res) => {
 
   console.log(`\n📩 Parse command: "${message}" | model: ${requestedModel || "auto"}`);
 
+  // ── ⚡ Vocab-First: ตรวจ vocab ก่อน ส่งไป AI ──────────────────
+  // ถ้า match → return ทันที (~0ms) ไม่ต้องเรียก Ollama เลย
+  const vocabResult = vocabService.searchVocab(message);
+  if (vocabResult.found) {
+    console.log(`⚡ Vocab-first match: ${vocabResult.device} / ${vocabResult.action} (${vocabResult.source})`);
+    const record = historyService.add({
+      userMessage: message,
+      aiMessage:   vocabResult.message,
+      device:      vocabResult.device,
+      action:      vocabResult.action,
+      params:      vocabResult.params || {},
+      model:       `vocab:${vocabResult.source}`,
+      source:      "vocab",
+      executed:    false,
+      success:     null
+    });
+    return res.json({
+      id:          record.id,
+      userMessage: message,
+      aiMessage:   vocabResult.message,
+      device:      vocabResult.device,
+      action:      vocabResult.action,
+      params:      vocabResult.params || {},
+      model:       `vocab:${vocabResult.source}`,
+      source:      "vocab",
+      timestamp:   record.timestamp
+    });
+  }
+  // ────────────────────────────────────────────────────────────
+
   const aiResult = await ollamaService.parseCommand(message, requestedModel || null);
   if (!aiResult.success) {
     return res.status(500).json({ error: "AI ประมวลผลไม่ได้", details: aiResult.error });
@@ -53,6 +83,7 @@ router.post("/", async (req, res) => {
     timestamp: record.timestamp
   });
 });
+
 
 // ─────────────────────────────────────────────────────────
 // POST /api/command/execute — Execute จริง (หลัง user confirm)

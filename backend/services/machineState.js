@@ -5,64 +5,64 @@
 
 let machineState = {
   conveyor1: {
-    id: "conveyor1",
-    name: "Conveyor 1",
-    nameEn: "Conveyor 1",
-    status: "stopped",   // running | stopped | warning | error
-    speed: 0,            // 0-100 %
-    temp: 38,
-    unit: "%",
-    icon: "🏭"
+    id: "conveyor1", name: "Conveyor 1", nameEn: "Conveyor 1",
+    status: "stopped", speed: 0, temp: 38,
+    metricName: "ความเร็ว", unit: "%", icon: "🏭"
   },
   conveyor2: {
-    id: "conveyor2",
-    name: "Conveyor 2",
-    nameEn: "Conveyor 2",
-    status: "stopped",
-    speed: 0,
-    temp: 35,
-    unit: "%",
-    icon: "🏭"
+    id: "conveyor2", name: "Conveyor 2", nameEn: "Conveyor 2",
+    status: "stopped", speed: 0, temp: 35,
+    metricName: "ความเร็ว", unit: "%", icon: "🏭"
   },
   motor1: {
-    id: "motor1",
-    name: "มอเตอร์หลัก",
-    nameEn: "Main Motor",
-    status: "stopped",
-    speed: 0,
-    temp: 42,
-    unit: "%",
-    icon: "⚙️"
+    id: "motor1", name: "มอเตอร์หลัก", nameEn: "Main Motor",
+    status: "stopped", speed: 0, temp: 42,
+    metricName: "ความเร็วรอบ", unit: "%", icon: "⚙️"
   },
   pump1: {
-    id: "pump1",
-    name: "ปั๊มน้ำหล่อเย็น",
-    nameEn: "Cooling Pump",
-    status: "stopped",
-    speed: 0,
-    temp: 30,
-    unit: "%",
-    icon: "💧"
+    id: "pump1", name: "ปั๊มน้ำหล่อเย็น", nameEn: "Cooling Pump",
+    status: "stopped", speed: 0, temp: 30,
+    metricName: "อัตราการไหล", unit: "%", icon: "💧"
   },
   fan1: {
-    id: "fan1",
-    name: "พัดลมระบายความร้อน",
-    nameEn: "Cooling Fan",
-    status: "stopped",
-    speed: 0,
-    temp: 28,
-    unit: "%",
-    icon: "🌀"
+    id: "fan1", name: "พัดลมระบายความร้อน", nameEn: "Cooling Fan",
+    status: "stopped", speed: 0, temp: 28,
+    metricName: "ความเร็วลม", unit: "%", icon: "🌀"
   },
   robot1: {
-    id: "robot1",
-    name: "หุ่นยนต์แขนกล",
-    nameEn: "Robot Arm",
-    status: "stopped",
-    speed: 0,
-    temp: 33,
-    unit: "%",
-    icon: "🦾"
+    id: "robot1", name: "หุ่นยนต์แขนกล", nameEn: "Robot Arm",
+    status: "stopped", speed: 0, temp: 33,
+    metricName: "ความเร็วการทำงาน", unit: "%", icon: "🦾"
+  },
+  agv1: {
+    id: "agv1", name: "รถ AGV ลำเลียง", nameEn: "AGV Transport",
+    status: "stopped", speed: 0, temp: 32,
+    metricName: "ความเร็วการเดิน", unit: "%", icon: "🚜"
+  },
+  heater1: {
+    id: "heater1", name: "ฮีตเตอร์เตาอบ", nameEn: "Oven Heater",
+    status: "stopped", speed: 0, temp: 45,
+    metricName: "ระดับความร้อน", unit: "%", icon: "♨️"
+  },
+  compressor1: {
+    id: "compressor1", name: "เครื่องปั๊มลม", nameEn: "Air Compressor",
+    status: "stopped", speed: 0, temp: 40,
+    metricName: "แรงดันลม", unit: "PSI", icon: "💨"
+  },
+  crane1: {
+    id: "crane1", name: "เครนยกสินค้า", nameEn: "Overhead Crane",
+    status: "stopped", speed: 0, temp: 34,
+    metricName: "ความเร็วรอก", unit: "%", icon: "🏗️"
+  },
+  light1: {
+    id: "light1", name: "ไฟสัญญาณเตือน", nameEn: "Tower Light",
+    status: "stopped", speed: 0, temp: 27,
+    metricName: "ระดับความสว่าง", unit: "%", icon: "🚨"
+  },
+  chiller1: {
+    id: "chiller1", name: "เครื่องทำความเย็น", nameEn: "Chiller Unit",
+    status: "stopped", speed: 0, temp: 18,
+    metricName: "ระดับความเย็น", unit: "%", icon: "❄️"
   }
 };
 
@@ -100,7 +100,7 @@ module.exports = {
       case "on":
         machine.status = "running";
         machine.speed = params.speed || 60;
-        return { success: true, message: `เปิด ${machine.name} แล้ว ที่ความเร็ว ${machine.speed}%` };
+        return { success: true, message: `เปิด ${machine.name} แล้ว (${machine.metricName}: ${machine.speed}${machine.unit})` };
 
       case "stop":
       case "off":
@@ -113,7 +113,7 @@ module.exports = {
           machine.status = "running";
         }
         machine.speed = Math.max(0, Math.min(100, params.speed || 50));
-        return { success: true, message: `ตั้งความเร็ว ${machine.name} เป็น ${machine.speed}%` };
+        return { success: true, message: `ตั้ง${machine.metricName} ${machine.name} เป็น ${machine.speed}${machine.unit}` };
 
       case "emergency_stop":
         machine.status = "error";

@@ -8,20 +8,40 @@ const { v4: uuidv4 } = require("uuid");
 
 const VOCAB_PATH = path.join(__dirname, "../config/vocabulary.json");
 
+// ─── In-memory cache (หลีกเลี่ยงอ่าน disk ทุก request) ───────
+let _cache = null;
+let _promptCacheInvalidated = false; // flag บอก ollamaService ว่า prompt ต้อง rebuild
+
+function _invalidateCache() {
+  _cache = null;
+  _promptCacheInvalidated = true;
+}
+
+function isPromptDirty() {
+  const dirty = _promptCacheInvalidated;
+  _promptCacheInvalidated = false; // reset หลังอ่าน
+  return dirty;
+}
+
 function load() {
+  if (_cache) return _cache;
   try {
     const raw = fs.readFileSync(VOCAB_PATH, "utf8");
-    return JSON.parse(raw);
+    _cache = JSON.parse(raw);
   } catch {
-    return { deviceAliases: {}, actionAliases: {}, customCommands: [] };
+    _cache = { deviceAliases: {}, actionAliases: {}, customCommands: [] };
   }
+  return _cache;
 }
 
 function save(data) {
+  _cache = data; // อัพเดต cache ทันที ไม่ต้องอ่านกลับ
+  _invalidateCache();
+  _cache = data; // restore หลัง invalidate เพื่อไม่ต้องอ่าน disk รอบถัดไป
   fs.writeFileSync(VOCAB_PATH, JSON.stringify(data, null, 2), "utf8");
 }
 
-// รับ vocab ทั้งหมด
+// รับ vocab ทั้งหมด (จาก cache)
 function getAll() {
   return load();
 }
@@ -102,6 +122,12 @@ function searchVocab(message) {
     "ปั๊ม": "pump1", "ปั๊มน้ำ": "pump1", "pump": "pump1", "pump1": "pump1",
     "พัดลม": "fan1", "fan": "fan1", "fan1": "fan1",
     "หุ่นยนต์": "robot1", "แขนกล": "robot1", "robot": "robot1", "robot1": "robot1",
+    "agv": "agv1", "agv1": "agv1", "รถ agv": "agv1", "รถลำเลียง": "agv1", "เอจีวี": "agv1",
+    "ฮีตเตอร์": "heater1", "heater": "heater1", "heater1": "heater1", "เตาอบ": "heater1", "เครื่องทำความร้อน": "heater1",
+    "ปั๊มลม": "compressor1", "ปั้มลม": "compressor1", "compressor": "compressor1", "compressor1": "compressor1", "คอมเพรสเซอร์": "compressor1",
+    "เครน": "crane1", "crane": "crane1", "crane1": "crane1", "รอก": "crane1", "รอกไฟฟ้า": "crane1",
+    "ไฟสัญญาณ": "light1", "ไฟเตือน": "light1", "light": "light1", "light1": "light1", "ไฟอลาร์ม": "light1",
+    "ชิลเลอร์": "chiller1", "chiller": "chiller1", "chiller1": "chiller1", "เครื่องทำความเย็น": "chiller1",
     // Custom aliases
     ...vocab.deviceAliases
   };
@@ -115,16 +141,26 @@ function searchVocab(message) {
     "ฉุกเฉิน": "emergency_stop", "emergency": "emergency_stop",
     "estop": "emergency_stop", "e-stop": "emergency_stop",
     "รีเซ็ต": "reset", "reset": "reset", "เริ่มใหม่": "reset",
+    "ตั้ง": "set_speed", "ปรับ": "set_speed", "เร่ง": "set_speed", "ลด": "set_speed",
+    "ตั้งความเร็ว": "set_speed", "ปรับความเร็ว": "set_speed",
+    "ตั้งความร้อน": "set_speed", "ปรับความร้อน": "set_speed", "เร่งความร้อน": "set_speed",
+    "ตั้งอุณหภูมิ": "set_speed", "ปรับอุณหภูมิ": "set_speed",
+    "ตั้งแรงดัน": "set_speed", "ปรับแรงดัน": "set_speed",
+    "ตั้งไฟ": "set_speed", "ปรับไฟ": "set_speed", "ตั้งความสว่าง": "set_speed",
+    "ตั้งความเย็น": "set_speed", "ปรับความเย็น": "set_speed", "เร่งความเย็น": "set_speed",
+    "ตั้งอัตราไหล": "set_speed", "ปรับอัตราไหล": "set_speed",
     // Custom aliases
     ...vocab.actionAliases
   };
 
   // ค้นหา device (longest match first)
   let foundDevice = null;
+  let matchedDeviceKey = "";
   const deviceKeys = Object.keys(allDeviceAliases).sort((a, b) => b.length - a.length);
   for (const key of deviceKeys) {
     if (lower.includes(key.toLowerCase())) {
       foundDevice = allDeviceAliases[key];
+      matchedDeviceKey = key.toLowerCase();
       break;
     }
   }
@@ -139,12 +175,19 @@ function searchVocab(message) {
     }
   }
 
-  // หา speed
-  const speedMatch = message.match(/(\d+)\s*%/);
+  // หา speed (ลบ matchedDeviceKey ออกก่อนเพื่อไม่ให้ "สายพาน 1" สับสนกับ speed 1)
   const params = {};
+  let textForSpeed = lower;
+  if (matchedDeviceKey) {
+    textForSpeed = textForSpeed.replace(matchedDeviceKey, "");
+  }
+  const speedMatch = textForSpeed.match(/(\d+)/);
   if (speedMatch) {
-    params.speed = parseInt(speedMatch[1]);
-    if (foundAction === "start" || foundAction === "chat") foundAction = "set_speed";
+    const val = parseInt(speedMatch[1], 10);
+    if (val >= 0 && val <= 100) {
+      params.speed = val;
+      if (foundAction === "start" || foundAction === "chat") foundAction = "set_speed";
+    }
   }
 
   if (foundDevice && foundAction !== "chat") {
@@ -154,7 +197,7 @@ function searchVocab(message) {
       device: foundDevice,
       action: foundAction,
       params,
-      message: `[Vocab] ${foundAction} ${foundDevice}${params.speed ? ` ${params.speed}%` : ""}`
+      message: `[Vocab] ${foundAction} ${foundDevice}${params.speed !== undefined ? ` ${params.speed}%` : ""}`
     };
   }
 
@@ -164,5 +207,5 @@ function searchVocab(message) {
 module.exports = {
   getAll, addDeviceAlias, addActionAlias,
   addCustomCommand, deleteCustomCommand, deleteAlias,
-  searchVocab
+  searchVocab, isPromptDirty
 };
