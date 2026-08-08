@@ -7,6 +7,7 @@ import MachineStatus from './components/MachineStatus';
 import CommandHistory from './components/CommandHistory';
 import ModelSelector from './components/ModelSelector';
 import VocabPanel from './components/VocabPanel';
+import GatewayMonitor from './components/GatewayMonitor';
 import './App.css';
 
 const TABS = [
@@ -114,6 +115,9 @@ export default function App() {
           {' · '}backend:3001
         </span>
       </footer>
+
+      {/* ─── มุมขวาล่าง: Gateway & PLC Telemetry Monitor ─── */}
+      <GatewayMonitor lastCommand={lastCommand} />
 
     </div>
   );

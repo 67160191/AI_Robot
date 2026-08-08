@@ -10,6 +10,7 @@ const mqttService    = require("../services/mqttService");
 const machineState   = require("../services/machineState");
 const historyService = require("../services/historyService");
 const vocabService   = require("../services/vocabularyService");
+const gatewayService = require("../services/gatewayService");
 
 // ─────────────────────────────────────────────────────────
 // POST /api/command — Parse เท่านั้น (ไม่ execute)
@@ -108,6 +109,9 @@ router.post("/execute", async (req, res) => {
 
   const machineResult = machineState.execute(device, action, params);
   const mqttResult    = mqttService.publish(device, action, params);
+  const gatewayLog    = gatewayService.recordGatewayTransaction({
+    device, action, params, userMessage: userMessage || `[Execute] ${action} ${device}`, source: "ai"
+  });
 
   // อัพเดต history record ถ้ามี id
   if (id) {
@@ -122,6 +126,7 @@ router.post("/execute", async (req, res) => {
     params,
     machineResult,
     mqttStatus: mqttService.getStatus(),
+    gatewayLog,
     timestamp: new Date().toISOString()
   });
 });
@@ -135,6 +140,9 @@ router.post("/direct", async (req, res) => {
 
   const machineResult = machineState.execute(device, action, params);
   const mqttResult    = mqttService.publish(device, action, params);
+  const gatewayLog    = gatewayService.recordGatewayTransaction({
+    device, action, params, userMessage: `[Quick] ${action} ${device}`, source: "direct"
+  });
 
   const record = historyService.add({
     userMessage: `[Quick] ${action} ${device}`,
@@ -151,13 +159,18 @@ router.post("/direct", async (req, res) => {
     device, action,
     machineResult,
     mqttStatus: mqttService.getStatus(),
+    gatewayLog,
     timestamp: record.timestamp
   });
 });
 
 // GET /api/command/status
 router.get("/status", (req, res) => {
-  res.json({ machines: machineState.getAll(), mqtt: mqttService.getStatus() });
+  res.json({
+    machines: machineState.getAll(),
+    mqtt: mqttService.getStatus(),
+    gateway: gatewayService.getConfig()
+  });
 });
 
 // GET /api/command/history
@@ -171,6 +184,22 @@ router.get("/models", async (req, res) => {
   const models = await ollamaService.getAvailableModels();
   const health  = await ollamaService.checkOllamaHealth();
   res.json({ health, models });
+});
+
+// ─────────────────────────────────────────────────────────
+// GATEWAY Endpoints
+// ─────────────────────────────────────────────────────────
+router.get("/gateway/status", (req, res) => {
+  res.json(gatewayService.getConfig());
+});
+
+router.get("/gateway/logs", (req, res) => {
+  const limit = parseInt(req.query.limit) || 30;
+  res.json(gatewayService.getLogs(limit));
+});
+
+router.get("/gateway/explainer", (req, res) => {
+  res.json(gatewayService.getPlcExplainer());
 });
 
 // ─────────────────────────────────────────────────────────

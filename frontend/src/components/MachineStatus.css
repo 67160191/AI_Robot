@@ -268,3 +268,71 @@
   padding: 48px;
   color: var(--text-muted);
 }
+
+/* ─── PLC Connection Info Strip ─────────────────────────
+   แสดงใต้ Machine Card แต่ละตัว — แยกจาก Gateway Monitor
+   ─────────────────────────────────────────────────────── */
+.plc-info-strip {
+  margin-top: 4px;
+  padding: 8px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.plc-strip-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.plc-station-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 20px;
+  border: 1px solid;
+  letter-spacing: 0.05em;
+  line-height: 1.6;
+}
+
+.plc-brand-chip {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 1px 7px;
+}
+
+.plc-strip-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.plc-model-text {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.plc-ip-text {
+  color: #4f9eff;
+}
+
+.plc-coil-text {
+  color: #b48fff;
+}
+
+.plc-divider {
+  color: var(--border);
+  opacity: 0.5;
+}

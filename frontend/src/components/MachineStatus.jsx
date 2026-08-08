@@ -71,6 +71,34 @@ function getMetricIcon(metricName = '') {
   return '⚡';
 }
 
+function PlcInfoStrip({ plcInfo }) {
+  if (!plcInfo) return null;
+
+  const stationColor = {
+    'PLC-01': '#00c896',
+    'PLC-02': '#4f9eff',
+    'PLC-03': '#ff9f4a'
+  }[plcInfo.station] || '#a0a0a0';
+
+  return (
+    <div className="plc-info-strip">
+      <div className="plc-strip-left">
+        <span className="plc-station-badge" style={{ borderColor: stationColor, color: stationColor }}>
+          {plcInfo.station}
+        </span>
+        <span className="plc-brand-chip">{plcInfo.brand}</span>
+      </div>
+      <div className="plc-strip-right mono">
+        <span className="plc-model-text">{plcInfo.model}</span>
+        <span className="plc-divider">|</span>
+        <span className="plc-ip-text">{plcInfo.ip}</span>
+        <span className="plc-divider">|</span>
+        <span className="plc-coil-text">Coil {plcInfo.coil} ({plcInfo.bit})</span>
+      </div>
+    </div>
+  );
+}
+
 function MachineCard({ machine, onControl }) {
   const isRunning = machine.status === 'running';
   const isWarning = machine.status === 'warning';
@@ -131,6 +159,9 @@ function MachineCard({ machine, onControl }) {
           </button>
         )}
       </div>
+
+      {/* PLC Connection Info Strip — แยกออกจาก Gateway Monitor */}
+      <PlcInfoStrip plcInfo={machine.plcInfo} />
     </div>
   );
 }

@@ -1,0 +1,622 @@
+/* ============================================================
+   GatewayMonitor.css - Clean Grid Dashboard & Machine PLC Mapping
+   ============================================================ */
+
+.gateway-widget-fixed {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 9999;
+  font-family: var(--font-body, system-ui, sans-serif);
+}
+
+/* ── Collapsed HUD Badge ── */
+.gateway-hud-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: rgba(10, 20, 32, 0.95);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 30px;
+  color: #f8fafc;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.2);
+  backdrop-filter: blur(12px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gateway-hud-badge:hover {
+  transform: translateY(-2px) scale(1.02);
+  border-color: rgba(56, 189, 248, 0.8);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.7), 0 0 25px rgba(56, 189, 248, 0.4);
+}
+
+.pulse-anim {
+  animation: badgePulse 1.2s infinite alternate;
+}
+
+@keyframes badgePulse {
+  0% { box-shadow: 0 0 10px rgba(56, 189, 248, 0.4); }
+  100% { box-shadow: 0 0 25px rgba(56, 189, 248, 0.9), 0 0 35px rgba(168, 85, 247, 0.5); }
+}
+
+.hud-status-led {
+  position: relative;
+  width: 10px;
+  height: 10px;
+}
+
+.hud-status-led .dot.green {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.hud-status-led .wave {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #10b981;
+  animation: ping 2s infinite;
+  opacity: 0;
+}
+
+@keyframes ping {
+  75%, 100% { transform: scale(2); opacity: 0; }
+  0% { transform: scale(0.9); opacity: 0.8; }
+}
+
+.hud-badge-info {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.hud-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.05em;
+}
+
+.hud-sub {
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 1px;
+}
+
+.hud-expand-icon {
+  padding: 3px 8px;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 12px;
+  font-size: 11px;
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+/* ── Grid Card Dashboard Container ── */
+.gateway-grid-card {
+  width: 580px;
+  background: rgba(6, 13, 22, 0.97);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: 12px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(56, 189, 248, 0.2);
+  backdrop-filter: blur(16px);
+  overflow: hidden;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.card-glow {
+  animation: cardPulse 1s ease-in-out;
+}
+
+@keyframes cardPulse {
+  0% { border-color: rgba(56, 189, 248, 0.45); }
+  50% { border-color: #38bdf8; box-shadow: 0 0 40px rgba(56, 189, 248, 0.7); }
+  100% { border-color: rgba(56, 189, 248, 0.45); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Topbar Header */
+.grid-card-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #0d192a;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.topbar-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #38bdf8;
+  letter-spacing: 0.08em;
+}
+
+.topbar-icon {
+  font-size: 16px;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tab-btn-mini {
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #94a3b8;
+  font-size: 10.5px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-btn-mini:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #f8fafc;
+}
+
+.tab-btn-mini.active {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.btn-minimize {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 2px;
+}
+
+.btn-minimize:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+/* Dashboard Body */
+.grid-dashboard-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #050a12;
+  font-size: 12px;
+  max-height: 540px;
+  overflow-y: auto;
+}
+
+/* 2-Column Split Rows */
+.grid-row-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* Grid Boxes */
+.grid-box {
+  background: #0a1424;
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.box-label-header {
+  font-size: 11px;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed rgba(56, 189, 248, 0.25);
+}
+
+.box-inner-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+/* Box 1: AI Command */
+.box-ai-cmd {
+  text-align: center;
+}
+
+.ai-cmd-text {
+  color: #ffffff;
+  font-size: 13px;
+}
+
+.arrow-down-icon {
+  color: #a855f7;
+  font-size: 14px;
+  font-weight: 900;
+  margin: 2px 0;
+  animation: bounce 1.5s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(3px); }
+}
+
+.gateway-cmd-text {
+  color: #a855f7;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+}
+
+/* Box 2: Gateway */
+.gw-status-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.dot-led.green {
+  color: #10b981;
+  font-size: 14px;
+  text-shadow: 0 0 8px #10b981;
+}
+
+.gw-info-line {
+  color: #cbd5e1;
+  font-size: 11.5px;
+}
+
+/* Box 3: PLC Status */
+.stat-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stat-key {
+  color: #94a3b8;
+}
+
+/* Box 4: Communication */
+.comm-line {
+  color: #cbd5e1;
+  font-size: 11.5px;
+}
+
+.comm-direction {
+  font-weight: 800;
+  margin-right: 4px;
+}
+
+.tx-text { color: #f59e0b; }
+.rx-text { color: #34d399; }
+.comm-key { color: #94a3b8; }
+
+/* Box 5: Event Log */
+.box-event-log {
+  background: #08101d;
+}
+
+.event-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.event-log-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11.5px;
+}
+
+.log-time {
+  color: #64748b;
+  width: 65px;
+  flex-shrink: 0;
+}
+
+.log-msg {
+  color: #34d399;
+  font-weight: 600;
+}
+
+/* ── MACHINE PLC MAPPING TAB ── */
+.machine-map-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stations-summary-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.station-badge-card {
+  background: #091322;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 10.5px;
+}
+
+.st-name {
+  font-size: 11px;
+}
+
+.st-brand {
+  color: #94a3b8;
+  font-size: 10px;
+}
+
+.st-ip {
+  color: #cbd5e1;
+  font-size: 10px;
+}
+
+.st-count {
+  font-size: 10px;
+  margin-top: 2px;
+}
+
+/* Search Box */
+.map-search-row {
+  width: 100%;
+}
+
+.search-input {
+  width: 100%;
+  padding: 6px 12px;
+  background: #070e1a;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 6px;
+  color: #f8fafc;
+  font-size: 11px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+}
+
+/* Split View Container */
+.machine-split-container {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 10px;
+  min-height: 280px;
+}
+
+.machine-list-box {
+  background: #060c18;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 6px;
+  overflow-y: auto;
+  max-height: 290px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.machine-item-card {
+  padding: 6px 8px;
+  background: #0c182a;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.machine-item-card:hover {
+  background: #12243d;
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.machine-item-card.active {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
+}
+
+.m-name {
+  font-size: 11px;
+  color: #f8fafc;
+}
+
+.m-sub-row {
+  font-size: 9.5px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* Inspector Box */
+.machine-inspector-box {
+  background: #070f1d;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 290px;
+}
+
+.inspector-title {
+  font-size: 12.5px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hardware-specs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 10.5px;
+}
+
+.hw-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.hw-label {
+  color: #64748b;
+  width: 120px;
+  flex-shrink: 0;
+}
+
+.hw-val {
+  color: #cbd5e1;
+  text-align: right;
+  flex: 1;
+}
+
+.wiring-description-box {
+  background: #050a14;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 10px;
+  margin-top: 4px;
+}
+
+.wiring-title {
+  margin-bottom: 4px;
+}
+
+.wiring-text {
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+/* Colors Utility */
+.green-text { color: #34d399; }
+.cyan-text { color: #38bdf8; }
+.purple-text { color: #c084fc; }
+.yellow-text { color: #fbbf24; }
+.orange-text { color: #fb923c; }
+.red-text { color: #f87171; }
+
+/* PLC Languages Tab */
+.plc-lang-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.plc-lang-title {
+  font-size: 12px;
+  color: #38bdf8;
+  margin-bottom: 4px;
+}
+
+.plc-lang-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lang-card {
+  background: rgba(15, 28, 45, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.lang-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.lang-code {
+  font-size: 11px;
+  font-weight: 800;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.15);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.lang-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.lang-tag {
+  margin-left: auto;
+  font-size: 9px;
+  color: #a855f7;
+  background: rgba(168, 85, 247, 0.15);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.lang-desc {
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
+.mono {
+  font-family: var(--font-mono, monospace);
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .gateway-grid-card {
+    width: calc(100vw - 32px);
+  }
+  .grid-row-split {
+    grid-template-columns: 1fr;
+  }
+  .machine-split-container {
+    grid-template-columns: 1fr;
+  }
+  .stations-summary-bar {
+    grid-template-columns: 1fr;
+  }
+}

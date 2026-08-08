@@ -35,6 +35,11 @@ export const api = {
   getHistory: (limit = 30) => request('GET', `/command/history?limit=${limit}`),
   getModels:  () => request('GET', '/command/models'),
 
+  // ── Gateway & PLC Monitor ──
+  getGatewayStatus:    () => request('GET', '/command/gateway/status'),
+  getGatewayLogs:      (limit = 30) => request('GET', `/command/gateway/logs?limit=${limit}`),
+  getGatewayExplainer: () => request('GET', '/command/gateway/explainer'),
+
   // ── Vocabulary ──
   getVocab: () => request('GET', '/command/vocab'),
   addDeviceAlias:  (alias, deviceId) => request('POST', '/command/vocab/device',  { alias, deviceId }),
