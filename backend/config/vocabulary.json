@@ -98,5 +98,16 @@
     "ลด": "set_speed",
     "เพิ่ม": "set_speed"
   },
-  "customCommands": []
+  "customCommands": [
+    {
+      "id": "cmd-c7347305",
+      "phrase": "ปป",
+      "device": "conveyor1",
+      "action": "set_speed",
+      "params": {
+        "speed": 83
+      },
+      "note": ""
+    }
+  ]
 }
