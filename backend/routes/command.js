@@ -1,0 +1,184 @@
+// ============================================================
+// Command Route - /api/command
+// แยก Parse (AI) ออกจาก Execute (ต้องยืนยัน) อย่างชัดเจน
+// ============================================================
+
+const express = require("express");
+const router  = express.Router();
+const ollamaService  = require("../services/ollamaService");
+const mqttService    = require("../services/mqttService");
+const machineState   = require("../services/machineState");
+const historyService = require("../services/historyService");
+const vocabService   = require("../services/vocabularyService");
+
+// ─────────────────────────────────────────────────────────
+// POST /api/command — Parse เท่านั้น (ไม่ execute)
+// Frontend แสดง confirm → ถ้า confirm ค่อย call /execute
+// ─────────────────────────────────────────────────────────
+router.post("/", async (req, res) => {
+  const { message, model: requestedModel } = req.body;
+  if (!message?.trim()) return res.status(400).json({ error: "กรุณาระบุคำสั่ง" });
+
+  console.log(`\n📩 Parse command: "${message}" | model: ${requestedModel || "auto"}`);
+
+  const aiResult = await ollamaService.parseCommand(message, requestedModel || null);
+  if (!aiResult.success) {
+    return res.status(500).json({ error: "AI ประมวลผลไม่ได้", details: aiResult.error });
+  }
+
+  const { device, action, params, message: aiMessage, model, source } = aiResult.data;
+
+  // บันทึก history (ยังไม่ execute)
+  const record = historyService.add({
+    userMessage: message,
+    aiMessage,
+    device,
+    action,
+    params,
+    model,
+    source: source || "ai",
+    executed: false,
+    success: null
+  });
+
+  res.json({
+    id: record.id,
+    userMessage: message,
+    aiMessage,
+    device,
+    action,
+    params,
+    model,
+    source,
+    timestamp: record.timestamp
+  });
+});
+
+// ─────────────────────────────────────────────────────────
+// POST /api/command/execute — Execute จริง (หลัง user confirm)
+// ─────────────────────────────────────────────────────────
+router.post("/execute", async (req, res) => {
+  const { id, device, action, params = {}, userMessage = "" } = req.body;
+
+  if (!device || !action) {
+    return res.status(400).json({ error: "ต้องระบุ device และ action" });
+  }
+
+  console.log(`\n✅ Execute: device=${device} action=${action} params=${JSON.stringify(params)}`);
+
+  const machineResult = machineState.execute(device, action, params);
+  const mqttResult    = mqttService.publish(device, action, params);
+
+  // อัพเดต history record ถ้ามี id
+  if (id) {
+    historyService.updateExecuted(id, machineResult);
+  }
+
+  console.log(`⚙️ Machine result:`, machineResult);
+
+  res.json({
+    device,
+    action,
+    params,
+    machineResult,
+    mqttStatus: mqttService.getStatus(),
+    timestamp: new Date().toISOString()
+  });
+});
+
+// ─────────────────────────────────────────────────────────
+// POST /api/command/direct — Quick Buttons (ไม่ผ่าน AI)
+// ─────────────────────────────────────────────────────────
+router.post("/direct", async (req, res) => {
+  const { device, action, params = {} } = req.body;
+  if (!device || !action) return res.status(400).json({ error: "ต้องระบุ device และ action" });
+
+  const machineResult = machineState.execute(device, action, params);
+  const mqttResult    = mqttService.publish(device, action, params);
+
+  const record = historyService.add({
+    userMessage: `[Quick] ${action} ${device}`,
+    aiMessage: machineResult.message,
+    device, action, params,
+    model: "direct",
+    source: "direct",
+    executed: true,
+    success: machineResult.success
+  });
+
+  res.json({
+    id: record.id,
+    device, action,
+    machineResult,
+    mqttStatus: mqttService.getStatus(),
+    timestamp: record.timestamp
+  });
+});
+
+// GET /api/command/status
+router.get("/status", (req, res) => {
+  res.json({ machines: machineState.getAll(), mqtt: mqttService.getStatus() });
+});
+
+// GET /api/command/history
+router.get("/history", (req, res) => {
+  const limit = parseInt(req.query.limit) || 50;
+  res.json(historyService.getAll(limit));
+});
+
+// GET /api/command/models
+router.get("/models", async (req, res) => {
+  const models = await ollamaService.getAvailableModels();
+  const health  = await ollamaService.checkOllamaHealth();
+  res.json({ health, models });
+});
+
+// ─────────────────────────────────────────────────────────
+// VOCAB endpoints
+// ─────────────────────────────────────────────────────────
+
+// GET /api/command/vocab — ดู vocabulary ทั้งหมด
+router.get("/vocab", (req, res) => {
+  res.json(vocabService.getAll());
+});
+
+// POST /api/command/vocab/device — เพิ่ม device alias
+router.post("/vocab/device", (req, res) => {
+  const { alias, deviceId } = req.body;
+  if (!alias || !deviceId) return res.status(400).json({ error: "ต้องระบุ alias และ deviceId" });
+  const result = vocabService.addDeviceAlias(alias, deviceId);
+  res.json({ success: true, deviceAliases: result });
+});
+
+// POST /api/command/vocab/action — เพิ่ม action alias
+router.post("/vocab/action", (req, res) => {
+  const { alias, action } = req.body;
+  if (!alias || !action) return res.status(400).json({ error: "ต้องระบุ alias และ action" });
+  const result = vocabService.addActionAlias(alias, action);
+  res.json({ success: true, actionAliases: result });
+});
+
+// POST /api/command/vocab/command — เพิ่ม custom command shortcut
+router.post("/vocab/command", (req, res) => {
+  const { phrase, device, action, params, note } = req.body;
+  if (!phrase || !device || !action) {
+    return res.status(400).json({ error: "ต้องระบุ phrase, device, action" });
+  }
+  const result = vocabService.addCustomCommand({ phrase, device, action, params, note });
+  res.json({ success: true, command: result });
+});
+
+// DELETE /api/command/vocab/command/:id — ลบ custom command
+router.delete("/vocab/command/:id", (req, res) => {
+  vocabService.deleteCustomCommand(req.params.id);
+  res.json({ success: true });
+});
+
+// DELETE /api/command/vocab/alias — ลบ alias
+router.delete("/vocab/alias", (req, res) => {
+  const { type, key } = req.body;
+  vocabService.deleteAlias(type, key);
+  res.json({ success: true });
+});
+
+module.exports = router;

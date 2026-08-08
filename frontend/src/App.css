@@ -1,0 +1,162 @@
+/* ============================================================
+   App CSS — Fixed header layout + proper flex
+   ============================================================ */
+
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Header ── */
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+  height: 64px;
+  flex-shrink: 0;
+  background: rgba(10, 21, 32, 0.97);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  z-index: 200;
+}
+
+/* Brand */
+.header-brand {
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.header-logo {
+  font-size: 16px;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--primary) 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+}
+
+.header-tagline {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Tabs — ตรงกลาง flex */
+.header-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-dark);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  white-space: nowrap;
+}
+
+.tab-icon { font-size: 15px; }
+.tab-desc { font-size: 12px; font-weight: 600; }
+
+.tab-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.tab-btn.active {
+  background: var(--primary-glow);
+  color: var(--primary);
+  box-shadow: 0 0 10px var(--primary-glow);
+}
+
+/* Spacer — ดัน header-right ไปขวา */
+.header-right {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ── Main Layout ── */
+.app-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.chat-section {
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.right-section {
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ── Footer ── */
+.app-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 20px;
+  border-top: 1px solid var(--border);
+  background: rgba(5, 10, 15, 0.95);
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-dim);
+  min-height: 36px;
+}
+
+.footer-left { flex-shrink: 0; }
+
+.footer-last-cmd {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.footer-label { color: var(--text-muted); }
+
+.footer-right {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--primary-dim);
+}
+
+/* ── Responsive ── */
+@media (max-width: 860px) {
+  .app-main {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+  .chat-section {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-tagline { display: none; }
+}

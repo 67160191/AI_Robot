@@ -1,0 +1,98 @@
+/* OllamaStatus CSS */
+
+.ollama-status {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ollama-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ollama-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.ollama-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 0.08em;
+}
+
+.ollama-url {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.ollama-badge {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 100px;
+}
+
+.ollama-badge.online {
+  background: var(--accent-green-dim);
+  color: var(--accent-green);
+  border: 1px solid rgba(0,255,157,0.2);
+}
+
+.ollama-badge.offline {
+  background: rgba(255, 71, 87, 0.1);
+  color: var(--accent-red);
+  border: 1px solid rgba(255,71,87,0.2);
+}
+
+.model-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.model-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.model-name {
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.model-size {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.ollama-offline-msg {
+  font-size: 12px;
+  color: var(--accent-yellow);
+  padding: 8px;
+  background: rgba(255,204,0,0.06);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255,204,0,0.2);
+  line-height: 1.8;
+}
+
+.ollama-offline-msg .mono {
+  background: var(--bg-surface);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+}

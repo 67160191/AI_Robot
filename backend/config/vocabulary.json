@@ -1,0 +1,82 @@
+{
+  "deviceAliases": {
+    "ไลน์": "conveyor1",
+    "ไลน์1": "conveyor1",
+    "ไลน์ 1": "conveyor1",
+    "ไลน์ผลิต": "conveyor1",
+    "สายส่ง": "conveyor1",
+    "สายพานที่หนึ่ง": "conveyor1",
+    "สายพานที่1": "conveyor1",
+    "ไลน์2": "conveyor2",
+    "ไลน์ 2": "conveyor2",
+    "สายพานที่สอง": "conveyor2",
+    "สายพานที่2": "conveyor2",
+    "มอเตอร์ไฟฟ้า": "motor1",
+    "มอเตอร์เมน": "motor1",
+    "m1": "motor1",
+    "ปั๊มน้ำหล่อ": "pump1",
+    "ปั๊มหล่อเย็น": "pump1",
+    "ปั๊มน้ำเย็น": "pump1",
+    "p1": "pump1",
+    "พัดลมระบาย": "fan1",
+    "แฟน": "fan1",
+    "f1": "fan1",
+    "หุ่น": "robot1",
+    "แขน": "robot1",
+    "แขนหุ่น": "robot1",
+    "r1": "robot1"
+  },
+  "actionAliases": {
+    "สตาร์ท": "start",
+    "start": "start",
+    "เดิน": "start",
+    "เริ่ม": "start",
+    "รัน": "start",
+    "run": "start",
+    "go": "start",
+    "on": "start",
+    "เปิด": "start",
+    "ปิด": "stop",
+    "หยุด": "stop",
+    "stop": "stop",
+    "off": "stop",
+    "หยุดเดิน": "stop",
+    "ดับ": "stop",
+    "พัก": "stop",
+    "ฉุกเฉิน": "emergency_stop",
+    "emergency": "emergency_stop",
+    "estop": "emergency_stop",
+    "e-stop": "emergency_stop",
+    "อันตราย": "emergency_stop",
+    "รีเซ็ต": "reset",
+    "reset": "reset",
+    "เริ่มใหม่": "reset",
+    "ค่าเริ่มต้น": "reset"
+  },
+  "customCommands": [
+    {
+      "id": "cmd-default-1",
+      "phrase": "ทดสอบระบบ",
+      "device": "motor1",
+      "action": "start",
+      "params": { "speed": 30 },
+      "note": "ทดสอบมอเตอร์ที่ความเร็วต่ำ 30%"
+    },
+    {
+      "id": "cmd-default-2",
+      "phrase": "เดินสายการผลิต",
+      "device": "conveyor1",
+      "action": "start",
+      "params": { "speed": 70 },
+      "note": "เปิดสายพานที่ความเร็วปกติ"
+    },
+    {
+      "id": "cmd-default-3",
+      "phrase": "โหมดประหยัด",
+      "device": "fan1",
+      "action": "set_speed",
+      "params": { "speed": 40 },
+      "note": "พัดลมที่ความเร็วต่ำ ประหยัดไฟ"
+    }
+  ]
+}
