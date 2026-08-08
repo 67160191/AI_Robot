@@ -99,6 +99,7 @@ function getSystemPrompt() {
 - crane1: เครนยกสินค้า
 - light1: ไฟสัญญาณเตือน
 - chiller1: เครื่องทำความเย็น
+- all: ทั้งระบบ / ทุกเครื่องจักร
 
 Actions ที่ใช้ได้: start | stop | set_speed | emergency_stop | reset
 
@@ -127,7 +128,8 @@ ${customCmdList || "  (ยังไม่มี)"}
 "สายพาน 1 ความเร็ว 80" → {"device":"conveyor1","action":"set_speed","params":{"speed":80},"message":"ตั้งความเร็วสายพาน 1 เป็น 80%"}
 "สายพาน 2 ปรับความเร็ว 60" → {"device":"conveyor2","action":"set_speed","params":{"speed":60},"message":"ตั้งความเร็วสายพาน 2 เป็น 60%"}
 "ปิดสายพาน 2" → {"device":"conveyor2","action":"stop","params":{},"message":"ปิดสายพาน 2 แล้ว"}
-"หยุดฉุกเฉิน" → {"device":null,"action":"emergency_stop","params":{},"message":"หยุดฉุกเฉินทุกเครื่อง"}`;
+"ปิดเครื่องจักรทุกตัว" → {"device":"all","action":"stop","params":{},"message":"ปิดเครื่องจักรทั้งหมดแล้ว"}
+"หยุดฉุกเฉิน" → {"device":"all","action":"emergency_stop","params":{},"message":"หยุดฉุกเฉินทุกเครื่อง"}`;
 
 
   console.log("📝 System prompt cache refreshed");

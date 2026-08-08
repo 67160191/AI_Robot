@@ -62,16 +62,16 @@
 /* Machine Grid */
 .machine-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--gap-md);
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
 }
 
 /* Machine Card */
 .machine-card {
-  padding: 16px;
+  padding: 20px 24px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 20px;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -118,16 +118,16 @@
 .machine-card-top {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .machine-icon-wrap {
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 26px;
   background: var(--bg-surface);
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
@@ -140,7 +140,7 @@
 }
 
 .machine-name {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
   white-space: nowrap;
@@ -149,7 +149,7 @@
 }
 
 .machine-id {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
@@ -161,7 +161,7 @@
 }
 
 .status-text {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -169,14 +169,14 @@
 .machine-metrics {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .metric {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
 }
 
 .metric-speed {
@@ -255,7 +255,7 @@
 /* Controls */
 .machine-controls {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
@@ -273,20 +273,20 @@
    แสดงใต้ Machine Card แต่ละตัว — แยกจาก Gateway Monitor
    ─────────────────────────────────────────────────────── */
 .plc-info-strip {
-  margin-top: 4px;
-  padding: 8px 10px;
+  margin-top: 8px;
+  padding: 12px 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.07);
   background: rgba(0, 0, 0, 0.2);
   border-radius: 0 0 var(--radius-md) var(--radius-md);
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 8px;
 }
 
 .plc-strip-left {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
 }
 
 .plc-station-badge {

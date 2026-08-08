@@ -193,6 +193,9 @@ function searchVocab(message) {
     "ชิลเลอร์ 1": "chiller1", "ชิลเลอร์1": "chiller1", "ชิลเลอร์": "chiller1", "ชิลเล่อร์": "chiller1", "ชิลเลอร": "chiller1", "ชิลเลอ": "chiller1", "ชิเลอร์": "chiller1",
     "chiller 1": "chiller1", "chiller1": "chiller1", "chiller": "chiller1", "chiller unit": "chiller1", "แอร์": "chiller1",
 
+    // ระบบทั้งหมด (all)
+    "ทุกเครื่อง": "all", "ทุกอย่าง": "all", "ทั้งหมด": "all", "ระบบ": "all", "ทุกตัว": "all", "เครื่องจักรทั้งหมด": "all", "all": "all",
+
     // Custom aliases
     ...vocab.deviceAliases
   };

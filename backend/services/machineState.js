@@ -102,6 +102,17 @@ module.exports = {
   get: (id) => machineState[id],
 
   execute: (deviceId, action, params = {}) => {
+    // กรณีสั่งทุกเครื่อง (Broadcast)
+    if (deviceId === "all") {
+      let executedCount = 0;
+      for (const key of Object.keys(machineState)) {
+        module.exports.execute(key, action, params);
+        executedCount++;
+      }
+      const actionName = action === "start" ? "เปิด" : action === "stop" ? "ปิด" : action === "emergency_stop" ? "หยุดฉุกเฉิน" : "สั่ง";
+      return { success: true, message: `ดำเนินการ${actionName}เครื่องจักรทั้งหมด (${executedCount} เครื่อง) เรียบร้อยแล้ว` };
+    }
+
     const machine = machineState[deviceId];
     if (!machine) {
       return { success: false, error: `ไม่พบอุปกรณ์: ${deviceId}` };
