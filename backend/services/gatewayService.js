@@ -411,7 +411,20 @@ function recordGatewayTransaction({ device, action, params = {}, userMessage = "
       rx: "SUCCESS",
       latency: `${Math.floor(8 + Math.random() * 8)} ms`
     },
-    eventLogs: newLogs.slice(0, 4),
+    // ข้อมูลเครื่องจักรที่สั่งงาน
+    machineName: map.name,
+    machinePlcStation: map.plcStation,
+    machineTerminal: map.outputTerminal,
+    machineCoil: `Coil ${map.coilAddr} (${map.plcBit})`,
+    // ข้อมูล Modbus / PLC ระดับ byte
+    coilAddr: map.coilAddr,
+    plcBit: map.plcBit,
+    regAddr: map.regAddr,
+    plcReg: map.plcReg,
+    slaveId: map.slaveId,
+    plcBrand: map.plcBrand,
+    plcModel: map.plcModel,
+    eventLogs: newLogs.slice(0, 6),
     timestamp: new Date().toISOString()
   };
 
