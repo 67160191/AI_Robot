@@ -1,0 +1,85 @@
+{
+  "plcs": [
+    {
+      "id": "plc1",
+      "name": "PLC Station 1",
+      "nameEn": "PLC Station 1",
+      "brand": "Mitsubishi",
+      "model": "FX5U-32MT/ESS",
+      "ip": "192.168.1.20",
+      "station": "PLC-01",
+      "status": "online",
+      "uptime": 99.8,
+      "errorRate": 0.01,
+      "heartbeatInterval": 3000,
+      "modbusBaseAddress": "00001",
+      "devices": ["conveyor1", "conveyor2", "motor1", "pump1", "fan1"],
+      "coilMappings": {
+        "conveyor1": {"coil": "00001", "bit": "M0"},
+        "conveyor2": {"coil": "00002", "bit": "M1"},
+        "motor1": {"coil": "00003", "bit": "M2"},
+        "pump1": {"coil": "00004", "bit": "M3"},
+        "fan1": {"coil": "00005", "bit": "M4"}
+      },
+      "terminalMappings": {
+        "conveyor1": {"output": "Y0-Y7", "input": "X0-X7"},
+        "conveyor2": {"output": "Y10-Y17", "input": "X10-X17"},
+        "motor1": {"output": "Y20-Y27", "input": "X20-X27"},
+        "pump1": {"output": "Y30-Y37", "input": "X30-X37"},
+        "fan1": {"output": "Y40-Y47", "input": "X40-X47"}
+      }
+    },
+    {
+      "id": "plc2",
+      "name": "PLC Station 2",
+      "nameEn": "PLC Station 2",
+      "brand": "Siemens",
+      "model": "S7-1200 CPU 1214C",
+      "ip": "192.168.1.21",
+      "station": "PLC-02",
+      "status": "online",
+      "uptime": 99.5,
+      "errorRate": 0.02,
+      "heartbeatInterval": 5000,
+      "modbusBaseAddress": "00006",
+      "devices": ["robot1", "agv1"],
+      "coilMappings": {
+        "robot1": {"coil": "00006", "bit": "%M0.5"},
+        "agv1": {"coil": "00007", "bit": "%M0.7"}
+      },
+      "terminalMappings": {
+        "robot1": {"output": "Q0.0-Q7.7", "input": "I0.0-I7.7"},
+        "agv1": {"output": "Q8.0-Qf.f", "input": "I8.0-If.f"}
+      }
+    },
+    {
+      "id": "plc3",
+      "name": "PLC Station 3",
+      "nameEn": "PLC Station 3",
+      "brand": "Schneider",
+      "model": "Modicon M221",
+      "ip": "192.168.1.22",
+      "station": "PLC-03",
+      "status": "online",
+      "uptime": 98.9,
+      "errorRate": 0.05,
+      "heartbeatInterval": 4000,
+      "modbusBaseAddress": "00008",
+      "devices": ["heater1", "compressor1", "crane1", "light1", "chiller1"],
+      "coilMappings": {
+        "heater1": {"coil": "00008", "bit": "%M8"},
+        "compressor1": {"coil": "00009", "bit": "%M9"},
+        "crane1": {"coil": "00010", "bit": "%M10"},
+        "light1": {"coil": "00011", "bit": "%M11"},
+        "chiller1": {"coil": "00012", "bit": "%M12"}
+      },
+      "terminalMappings": {
+        "heater1": {"output": "Q0-Q7", "input": "I0-I7"},
+        "compressor1": {"output": "Q8-Qf", "input": "I8-If"},
+        "crane1": {"output": "R0-R7", "input": "S0-S7"},
+        "light1": {"output": "R8-Rf", "input": "S8-Sf"},
+        "chiller1": {"output": "T0-T7", "input": "T0-T7"}
+      }
+    }
+  ]
+}

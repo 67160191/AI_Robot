@@ -203,6 +203,29 @@ router.get("/gateway/explainer", (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────
+// PLC SIMULATOR Endpoints (Multi-PLC Support)
+// ─────────────────────────────────────────────────────────
+router.get("/plc/status", (req, res) => {
+  res.json(gatewayService.getSimPLCs());
+});
+
+router.get("/plc/telemetry/:plcId", (req, res) => {
+  const telemetry = gatewayService.getSimPLCTelemetry(req.params.plcId);
+  if (!telemetry) return res.status(404).json({ error: "PLC not found" });
+  res.json(telemetry);
+});
+
+router.get("/plc/devices/:deviceId", (req, res) => {
+  const info = gatewayService.getDevicePlcInfo(req.params.deviceId);
+  if (!info) return res.status(404).json({ error: "Device not found" });
+  res.json(info);
+});
+
+router.get("/plc/mapping", (req, res) => {
+  res.json(gatewayService.getMachinePlcMapping());
+});
+
+// ─────────────────────────────────────────────────────────
 // VOCAB endpoints
 // ─────────────────────────────────────────────────────────
 

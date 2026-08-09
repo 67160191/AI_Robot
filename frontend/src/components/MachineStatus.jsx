@@ -99,6 +99,78 @@ function PlcInfoStrip({ plcInfo }) {
   );
 }
 
+// ─── PLC Summary Card ──────────────────────────────────────
+function PlcSummaryCard({ plcData }) {
+  const statusColor = {
+    online: 'var(--status-running)',
+    offline: 'var(--text-muted)',
+    error: 'var(--status-error)'
+  }[plcData.status] || '#a0a0a0';
+
+  const statusBg = {
+    online: 'rgba(0,200,150,0.1)',
+    offline: 'rgba(160,160,160,0.1)',
+    error: 'rgba(255,80,80,0.1)'
+  }[plcData.status] || 'rgba(160,160,160,0.1)';
+
+  const brandIcons = {
+    'Mitsubishi': '🔴',
+    'Siemens': '🔵',
+    'Schneider': '🟢'
+  }[plcData.brand] || '🏭';
+
+  return (
+    <div
+      className="plc-card glass-card"
+      style={{
+        background: statusBg,
+        borderColor: statusColor,
+        border: `1px solid ${statusColor}30`
+      }}
+    >
+      <div className="plc-card-header">
+        <span className="plc-brand-icon">{brandIcons}</span>
+        <div className="plc-card-info">
+          <h4 className="plc-card-name">{plcData.station}</h4>
+          <span className="plc-card-brand mono">{plcData.brand} {plcData.model}</span>
+        </div>
+        <span
+          className="plc-status-badge"
+          style={{ color: statusColor, borderColor: statusColor }}
+        >
+          <span className={`status-dot ${plcData.status}`}></span>
+          {plcData.status.toUpperCase()}
+        </span>
+      </div>
+      <div className="plc-card-stats">
+        <div className="plc-stat">
+          <span className="plc-stat-val">{plcData.deviceCount}</span>
+          <span className="plc-stat-label">อุปกรณ์</span>
+        </div>
+        <div className="plc-stat-divider" />
+        <div className="plc-stat">
+          <span className="plc-stat-val" style={{ color: 'var(--accent-green)' }}>{plcData.onlineDevices}</span>
+          <span className="plc-stat-label">ทำงาน</span>
+        </div>
+        <div className="plc-stat-divider" />
+        <div className="plc-stat">
+          <span className="plc-stat-val">{plcData.uptime}%</span>
+          <span className="plc-stat-label">Uptime</span>
+        </div>
+        {plcData.errorCount > 0 && (
+          <>
+            <div className="plc-stat-divider" />
+            <div className="plc-stat plc-error-stat">
+              <span className="plc-stat-val" style={{ color: 'var(--accent-red)' }}>{plcData.errorCount}</span>
+              <span className="plc-stat-label">Errors</span>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function MachineCard({ machine, onControl }) {
   const isRunning = machine.status === 'running';
   const isWarning = machine.status === 'warning';
@@ -169,6 +241,7 @@ function MachineCard({ machine, onControl }) {
 export default function MachineStatus({ refreshTrigger }) {
   const [machines, setMachines] = useState({});
   const [mqttStatus, setMqttStatus] = useState(null);
+  const [plcSummary, setPlcSummary] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -178,6 +251,11 @@ export default function MachineStatus({ refreshTrigger }) {
       setMachines(result.data.machines);
       setMqttStatus(result.data.mqtt);
       setLastUpdate(new Date());
+    }
+    // Fetch PLC summary
+    const plcResult = await api.getPlcStatus();
+    if (plcResult.success) {
+      setPlcSummary(plcResult.data);
     }
     setIsLoading(false);
   };
@@ -240,6 +318,15 @@ export default function MachineStatus({ refreshTrigger }) {
           </span>
         )}
       </div>
+
+      {/* PLC Summary Cards */}
+      {plcSummary && plcSummary.plcs && (
+        <div className="plc-grid">
+          {plcSummary.plcs.map(plc => (
+            <PlcSummaryCard key={plc.id} plcData={plc} />
+          ))}
+        </div>
+      )}
 
       {/* Machine Grid */}
       {isLoading ? (

@@ -1,106 +1,129 @@
 // ============================================================
 // AI Robot Operator - Machine State Service
-// เก็บสถานะเครื่องจักรแบบ In-Memory (จำลองสถานะ PLC)
+// เก็บสถานะเครื่องจักรแบบ In-Memory + รองรับ Multi-PLC
 // ============================================================
 
-let machineState = {
-  conveyor1: {
-    id: "conveyor1", name: "Conveyor 1", nameEn: "Conveyor 1",
-    status: "stopped", speed: 0, temp: 38,
-    metricName: "ความเร็ว", unit: "%", icon: "🏭",
-    plcInfo: { station: "PLC-01", brand: "Mitsubishi", model: "FX5U-32MT/ESS", ip: "192.168.1.20", coil: "00001", bit: "M0" }
-  },
-  conveyor2: {
-    id: "conveyor2", name: "Conveyor 2", nameEn: "Conveyor 2",
-    status: "stopped", speed: 0, temp: 35,
-    metricName: "ความเร็ว", unit: "%", icon: "🏭",
-    plcInfo: { station: "PLC-01", brand: "Mitsubishi", model: "FX5U-32MT/ESS", ip: "192.168.1.20", coil: "00002", bit: "M1" }
-  },
-  motor1: {
-    id: "motor1", name: "มอเตอร์หลัก", nameEn: "Main Motor",
-    status: "stopped", speed: 0, temp: 42,
-    metricName: "ความเร็วรอบ", unit: "%", icon: "⚙️",
-    plcInfo: { station: "PLC-01", brand: "Mitsubishi", model: "FX5U-32MT/ESS", ip: "192.168.1.20", coil: "00003", bit: "M2" }
-  },
-  pump1: {
-    id: "pump1", name: "ปั๊มน้ำหล่อเย็น", nameEn: "Cooling Pump",
-    status: "stopped", speed: 0, temp: 30,
-    metricName: "อัตราการไหล", unit: "%", icon: "💧",
-    plcInfo: { station: "PLC-01", brand: "Mitsubishi", model: "FX5U-32MT/ESS", ip: "192.168.1.20", coil: "00004", bit: "M3" }
-  },
-  fan1: {
-    id: "fan1", name: "พัดลมระบายความร้อน", nameEn: "Cooling Fan",
-    status: "stopped", speed: 0, temp: 28,
-    metricName: "ความเร็วลม", unit: "%", icon: "🌀",
-    plcInfo: { station: "PLC-01", brand: "Mitsubishi", model: "FX5U-32MT/ESS", ip: "192.168.1.20", coil: "00005", bit: "M4" }
-  },
-  robot1: {
-    id: "robot1", name: "หุ่นยนต์แขนกล", nameEn: "Robot Arm",
-    status: "stopped", speed: 0, temp: 33,
-    metricName: "ความเร็วการทำงาน", unit: "%", icon: "🦾",
-    plcInfo: { station: "PLC-02", brand: "Siemens", model: "S7-1200 CPU 1214C", ip: "192.168.1.21", coil: "00006", bit: "%M0.5" }
-  },
-  agv1: {
-    id: "agv1", name: "รถ AGV ลำเลียง", nameEn: "AGV Transport",
-    status: "stopped", speed: 0, temp: 32,
-    metricName: "ความเร็วการเดิน", unit: "%", icon: "🚜",
-    plcInfo: { station: "PLC-02", brand: "Siemens", model: "S7-1200 CPU 1214C", ip: "192.168.1.21", coil: "00007", bit: "%M0.7" }
-  },
-  heater1: {
-    id: "heater1", name: "ฮีตเตอร์เตาอบ", nameEn: "Oven Heater",
-    status: "stopped", speed: 0, temp: 45,
-    metricName: "ระดับความร้อน", unit: "%", icon: "♨️",
-    plcInfo: { station: "PLC-03", brand: "Schneider", model: "Modicon M221", ip: "192.168.1.22", coil: "00008", bit: "%M8" }
-  },
-  compressor1: {
-    id: "compressor1", name: "เครื่องปั๊มลม", nameEn: "Air Compressor",
-    status: "stopped", speed: 0, temp: 40,
-    metricName: "แรงดันลม", unit: "PSI", icon: "💨",
-    plcInfo: { station: "PLC-03", brand: "Schneider", model: "Modicon M221", ip: "192.168.1.22", coil: "00009", bit: "%M9" }
-  },
-  crane1: {
-    id: "crane1", name: "เครนยกสินค้า", nameEn: "Overhead Crane",
-    status: "stopped", speed: 0, temp: 34,
-    metricName: "ความเร็วรอก", unit: "%", icon: "🏗️",
-    plcInfo: { station: "PLC-03", brand: "Schneider", model: "Modicon M221", ip: "192.168.1.22", coil: "00010", bit: "%M10" }
-  },
-  light1: {
-    id: "light1", name: "ไฟสัญญาณเตือน", nameEn: "Tower Light",
-    status: "stopped", speed: 0, temp: 27,
-    metricName: "ระดับความสว่าง", unit: "%", icon: "🚨",
-    plcInfo: { station: "PLC-03", brand: "Schneider", model: "Modicon M221", ip: "192.168.1.22", coil: "00011", bit: "%M11" }
-  },
-  chiller1: {
-    id: "chiller1", name: "เครื่องทำความเย็น", nameEn: "Chiller Unit",
-    status: "stopped", speed: 0, temp: 18,
-    metricName: "ระดับความเย็น", unit: "%", icon: "❄️",
-    plcInfo: { station: "PLC-03", brand: "Schneider", model: "Modicon M221", ip: "192.168.1.22", coil: "00012", bit: "%M12" }
-  }
-};
+const plcSimulator = require('./plcSimulator');
+const fs = require('fs');
+const path = require('path');
 
+// โหลด machine config
+const machinesConfig = JSON.parse(fs.readFileSync(path.join(__dirname, '../config/machines.json'), 'utf8'));
+
+// In-Machine State (จำลองสถานะ PLC)
+let machineState = {};
+machinesConfig.machines.forEach(m => {
+  machineState[m.id] = {
+    id: m.id,
+    name: m.name,
+    nameEn: m.nameEn,
+    status: m.status,
+    speed: m.speed,
+    temp: m.temp,
+    metricName: m.metricName,
+    unit: m.unit,
+    icon: m.icon,
+    plcId: m.plcId,
+    plcInfo: null, // จะตั้งด้านล่าง
+    simulation: m.simulation,
+    additionalParams: m.additionalParams || {},
+    // เพิ่ม parameters เพิ่มเติม
+    current: (m.additionalParams?.current?.value || 0),
+    voltage: (m.additionalParams?.voltage?.value || 0),
+    position: (m.additionalParams?.position?.value || 'home'),
+    gripper: (m.additionalParams?.gripper?.value || 0),
+    battery: (m.additionalParams?.battery?.value || 100),
+    direction: (m.additionalParams?.direction?.value || 'idle'),
+    targetTemp: (m.additionalParams?.targetTemp?.value || 0),
+    pressure: (m.additionalParams?.pressure?.value || 0),
+    height: (m.additionalParams?.height?.value || 0),
+    load: (m.additionalParams?.load?.value || 0),
+    color: (m.additionalParams?.color?.value || 'off'),
+    coolingLevel: (m.additionalParams?.coolingLevel?.value || 0)
+  };
+});
+
+// ตั้ง PLC info สำหรับแต่ละ machine
+const plcsConfig = JSON.parse(fs.readFileSync(path.join(__dirname, '../config/plcs.json'), 'utf8'));
+plcsConfig.plcs.forEach(plc => {
+  plc.devices.forEach(devId => {
+    if (machineState[devId]) {
+      machineState[devId].plcInfo = {
+        station: plc.station,
+        brand: plc.brand,
+        model: plc.model,
+        ip: plc.ip,
+        plcId: plc.id,
+        ...plc.coilMappings?.[devId] || {}
+      };
+    }
+  });
+});
+
+// ─── Temperature Simulation ───────────────────────────────
 // อุณหภูมิจะขึ้นเมื่อ running แล้วค่อย ๆ ลดตอน stopped
 setInterval(() => {
   Object.values(machineState).forEach(machine => {
+    const sim = machine.simulation || {};
+    const riseRate = sim.tempRiseRate || 0.5;
+    const coolRate = sim.tempCoolRate || 0.3;
+    const warningTemp = sim.warningTemp || 80;
+
     if (machine.status === "running") {
-      machine.temp = Math.min(machine.temp + Math.random() * 0.5, 95);
-    } else {
-      machine.temp = Math.max(machine.temp - Math.random() * 0.3, 25);
+      machine.temp = Math.min(machine.temp + Math.random() * riseRate, warningTemp - 5);
+    } else if (machine.status === "stopped" || machine.status === "error") {
+      machine.temp = Math.max(machine.temp - Math.random() * coolRate, 25);
     }
+
     machine.temp = parseFloat(machine.temp.toFixed(1));
 
     // Warning เมื่ออุณหภูมิสูง
-    if (machine.status === "running" && machine.temp > 80) {
+    if (machine.status === "running" && machine.temp > warningTemp) {
       machine.status = "warning";
-    } else if (machine.status === "warning" && machine.temp < 75) {
+    } else if (machine.status === "warning" && machine.temp < warningTemp - 5) {
       machine.status = "running";
+    }
+
+    // อัพเดท additional params เมื่อ running
+    if (machine.status === "running") {
+      // Current/Voltage สำหรับ motor1
+      if (machine.additionalParams?.current) {
+        machine.current = Math.min(25, machine.current + Math.random() * 2);
+        machine.voltage = 380 + Math.random() * 5;
+      }
+      // Battery สำหรับ agv1
+      if (machine.additionalParams?.battery) {
+        machine.battery = Math.max(0, machine.battery - Math.random() * 0.1);
+      }
+      // TargetTemp สำหรับ heater1
+      if (machine.additionalParams?.targetTemp) {
+        machine.targetTemp = machine.speed * 1.8;
+      }
+      // Pressure สำหรับ compressor1
+      if (machine.additionalParams?.pressure) {
+        machine.pressure = machine.speed * 1.2;
+      }
     }
   });
 }, 3000);
 
+// ─── Sync Machine State to PLC Simulator ──────────────────
+// ซิงค์สถานะเครื่องจักรกลับไปยัง PLC simulator
+const syncToPLC = () => {
+  Object.entries(machineState).forEach(([deviceId, machine]) => {
+    plcSimulator.updateDeviceStatus(deviceId, machine.status, { temp: machine.temp });
+  });
+};
+setInterval(syncToPLC, 5000);
+
 module.exports = {
+  // ได้สถานะทั้งหมดของเครื่องจักร
   getAll: () => machineState,
+
+  // ได้สถานะเครื่องจักรเฉพาะตัว
   get: (id) => machineState[id],
 
+  // executed command → อัพเดท machine state + PLC simulator
   execute: (deviceId, action, params = {}) => {
     // กรณีสั่งทุกเครื่อง (Broadcast)
     if (deviceId === "all") {
@@ -123,30 +146,89 @@ module.exports = {
       case "on":
         machine.status = "running";
         machine.speed = params.speed || 60;
-        return { success: true, message: `เปิด ${machine.name} แล้ว (${machine.metricName}: ${machine.speed}${machine.unit})` };
+        plcSimulator.updateDeviceStatus(deviceId, "running", { temp: machine.temp });
+        return { 
+          success: true, 
+          message: `เปิด ${machine.name} แล้ว (${machine.metricName}: ${machine.speed}${machine.unit})`,
+          device: deviceId,
+          action,
+          params: { speed: machine.speed }
+        };
 
       case "stop":
       case "off":
         machine.status = "stopped";
         machine.speed = 0;
-        return { success: true, message: `หยุด ${machine.name} แล้ว` };
+        plcSimulator.updateDeviceStatus(deviceId, "stopped", { temp: machine.temp });
+        return { 
+          success: true, 
+          message: `หยุด ${machine.name} แล้ว`,
+          device: deviceId,
+          action,
+          params: { speed: 0 }
+        };
 
       case "set_speed":
         if (machine.status !== "running") {
           machine.status = "running";
+          plcSimulator.updateDeviceStatus(deviceId, "running", { temp: machine.temp });
         }
         machine.speed = Math.max(0, Math.min(100, params.speed || 50));
-        return { success: true, message: `ตั้ง${machine.metricName} ${machine.name} เป็น ${machine.speed}${machine.unit}` };
+        return { 
+          success: true, 
+          message: `ตั้ง${machine.metricName} ${machine.name} เป็น ${machine.speed}${machine.unit}`,
+          device: deviceId,
+          action,
+          params: { speed: machine.speed }
+        };
+
+      case "set_current":
+        if (machine.additionalParams?.current) {
+          machine.current = Math.max(0, Math.min(30, params.current || 10));
+        }
+        return { 
+          success: true, 
+          message: `ตั้งกระแส ${machine.name} เป็น ${machine.current}A`,
+          device: deviceId,
+          action: "set_current",
+          params: { current: machine.current }
+        };
+
+      case "set_target_temp":
+        if (machine.additionalParams?.targetTemp) {
+          machine.targetTemp = Math.max(0, Math.min(200, params.targetTemp || 100));
+        }
+        return { 
+          success: true, 
+          message: `ตั้งอุณหภูมิเป้าหมาย ${machine.name} เป็น ${machine.targetTemp}°C`,
+          device: deviceId,
+          action: "set_target_temp",
+          params: { targetTemp: machine.targetTemp }
+        };
+
+      case "set_pressure":
+        if (machine.additionalParams?.pressure) {
+          machine.pressure = Math.max(0, Math.min(150, params.pressure || 80));
+        }
+        return { 
+          success: true, 
+          message: `ตั้งแรงดันลม ${machine.name} เป็น ${machine.pressure}PSI`,
+          device: deviceId,
+          action: "set_pressure",
+          params: { pressure: machine.pressure }
+        };
 
       case "emergency_stop":
         machine.status = "error";
         machine.speed = 0;
+        plcSimulator.updateDeviceStatus(deviceId, "error", { temp: machine.temp });
         return { success: true, message: `⚠️ Emergency Stop: ${machine.name}` };
 
       case "reset":
         machine.status = "stopped";
         machine.speed = 0;
-        machine.temp = 30;
+        machine.temp = machine.simulation?.normalTemp || 30;
+        plcSimulator.updateDeviceStatus(deviceId, "stopped", { temp: machine.temp });
         return { success: true, message: `Reset ${machine.name} เรียบร้อย` };
 
       default:

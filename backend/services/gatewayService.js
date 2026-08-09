@@ -2,9 +2,11 @@
 // AI Robot Operator - Gateway Service (Python PyModbus <-> PLC Modbus TCP)
 // IP: 192.168.1.20 | Port: 502 | Protocol: Modbus TCP
 // ข้อมูลการเชื่อมต่อเครื่องจักรกับ PLC ทั้งหมดแบบรายละเอียด
+// + PLC Simulator Integration สำหรับ Simulation Mode
 // ============================================================
 
 const { v4: uuidv4 } = require("uuid");
+const plcSimulator = require('./plcSimulator');
 
 // ─── การตั้งค่า Gateway & PLC Config ───────────────────────────
 const config = {
@@ -432,12 +434,34 @@ function recordGatewayTransaction({ device, action, params = {}, userMessage = "
   return currentDashboardState;
 }
 
+// ─── PLC Simulator Integration ─────────────────────────────
+// ดึงข้อมูล PLC จริงจาก simulator
+function getSimPLCs() {
+  return plcSimulator.getSummary();
+}
+
+function getSimPLCTelemetry(plcId) {
+  return plcSimulator.getTelemetry(plcId);
+}
+
+function getDevicePlcInfo(deviceId) {
+  const map = MACHINE_PLC_MAPPING[deviceId];
+  const sim = plcSimulator.getPLCForDevice(deviceId);
+  return {
+    ...map,
+    simStatus: sim?.status || 'offline',
+    simTelemetry: sim ? plcSimulator.getTelemetry(sim.id) : null
+  };
+}
+
 module.exports = {
   getConfig: () => ({
     ...config,
     currentDashboardState,
     machinePlcMapping: MACHINE_PLC_MAPPING,
-    plcStationsList
+    plcStationsList,
+    simulationMode: true,
+    simPLCs: getSimPLCs()
   }),
 
   getCurrentDashboardState: () => currentDashboardState,
@@ -450,5 +474,10 @@ module.exports = {
 
   recordGatewayTransaction,
 
-  getPlcLanguages: () => plcLanguages
+  getPlcLanguages: () => plcLanguages,
+
+  // PLC Simulator API
+  getSimPLCs,
+  getSimPLCTelemetry,
+  getDevicePlcInfo
 };

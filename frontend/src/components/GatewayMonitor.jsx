@@ -71,16 +71,28 @@ export default function GatewayMonitor({ lastCommand }) {
 
   const fetchGatewayData = async () => {
     try {
-      const res = await api.getGatewayStatus();
-      if (res.success && res.data) {
-        if (res.data.currentDashboardState) {
-          setDashState(res.data.currentDashboardState);
+      // ดึงข้อมูลจาก Gateway + PLC Simulator
+      const [gwRes, plcRes] = await Promise.all([
+        api.getGatewayStatus(),
+        api.getPlcStatus()
+      ]);
+
+      if (gwRes.success && gwRes.data) {
+        if (gwRes.data.currentDashboardState) {
+          setDashState(gwRes.data.currentDashboardState);
         }
-        if (res.data.machinePlcMapping) setMachineMapping(res.data.machinePlcMapping);
-        if (res.data.plcStationsList) setPlcStations(res.data.plcStationsList);
+        if (gwRes.data.machinePlcMapping) setMachineMapping(gwRes.data.machinePlcMapping);
+        if (gwRes.data.plcStationsList) setPlcStations(gwRes.data.plcStationsList);
+      }
+
+      // อัพเดท PLC simulation status จาก simulator endpoint
+      if (plcRes.success && plcRes.data) {
+        // Sync simulation status กับ dashboard state
+        const simData = plcRes.data;
+        console.log('🔌 PLC Simulator:', simData);
       }
     } catch (err) {
-      console.error('Failed to fetch gateway status:', err);
+      console.error('Failed to fetch gateway/plc data:', err);
     }
   };
 

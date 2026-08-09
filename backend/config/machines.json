@@ -1,0 +1,248 @@
+{
+  "machines": [
+    {
+      "id": "conveyor1",
+      "name": "สายพานลำเลียง 1",
+      "nameEn": "Conveyor 1",
+      "plcId": "plc1",
+      "status": "stopped",
+      "speed": 0,
+      "temp": 38,
+      "metricName": "ความเร็ว",
+      "unit": "%",
+      "icon": "🏭",
+      "simulation": {
+        "tempRiseRate": 0.5,
+        "tempCoolRate": 0.3,
+        "warningTemp": 80,
+        "normalTemp": 45
+      }
+    },
+    {
+      "id": "conveyor2",
+      "name": "สายพานลำเลียง 2",
+      "nameEn": "Conveyor 2",
+      "plcId": "plc1",
+      "status": "stopped",
+      "speed": 0,
+      "temp": 35,
+      "metricName": "ความเร็ว",
+      "unit": "%",
+      "icon": "🏭",
+      "simulation": {
+        "tempRiseRate": 0.5,
+        "tempCoolRate": 0.3,
+        "warningTemp": 80,
+        "normalTemp": 45
+      }
+    },
+    {
+      "id": "motor1",
+      "name": "มอเตอร์หลัก",
+      "nameEn": "Main Motor",
+      "plcId": "plc1",
+      "status": "stopped",
+      "speed": 0,
+      "temp": 42,
+      "metricName": "ความเร็วรอบ",
+      "unit": "%",
+      "icon": "⚙️",
+      "simulation": {
+        "tempRiseRate": 0.8,
+        "tempCoolRate": 0.2,
+        "warningTemp": 85,
+        "normalTemp": 55
+      },
+      "additionalParams": {
+        "current": { "value": 0, "unit": "A", "min": 0, "max": 30 },
+        "voltage": { "value": 0, "unit": "V", "min": 200, "max": 400 }
+      }
+    },
+    {
+      "id": "pump1",
+      "name": "ปั๊มน้ำหล่อเย็น",
+      "nameEn": "Cooling Pump",
+      "plcId": "plc1",
+      "status": "stopped",
+      "speed": 0,
+      "temp": 30,
+      "metricName": "อัตราการไหล",
+      "unit": "%",
+      "icon": "💧",
+      "simulation": {
+        "tempRiseRate": 0.3,
+        "tempCoolRate": 0.5,
+        "warningTemp": 75,
+        "normalTemp": 40
+      }
+    },
+    {
+      "id": "fan1",
+      "name": "พัดลมระบายความร้อน",
+      "nameEn": "Cooling Fan",
+      "plcId": "plc1",
+      "status": "stopped",
+      "speed": 0,
+      "temp": 28,
+      "metricName": "ความเร็วลม",
+      "unit": "%",
+      "icon": "🌀",
+      "simulation": {
+        "tempRiseRate": 0.4,
+        "tempCoolRate": 0.6,
+        "warningTemp": 70,
+        "normalTemp": 35
+      }
+    },
+    {
+      "id": "robot1",
+      "name": "หุ่นยนต์แขนกล",
+      "nameEn": "Robot Arm",
+      "plcId": "plc2",
+      "status": "stopped",
+      "speed": 0,
+      "temp": 33,
+      "metricName": "ความเร็วการทำงาน",
+      "unit": "%",
+      "icon": "🦾",
+      "simulation": {
+        "tempRiseRate": 0.6,
+        "tempCoolRate": 0.25,
+        "warningTemp": 82,
+        "normalTemp": 50
+      },
+      "additionalParams": {
+        "position": { "value": "home", "unit": "", "options": ["home", "a", "b", "c"] },
+        "gripper": { "value": 0, "unit": "%", "min": 0, "max": 100 }
+      }
+    },
+    {
+      "id": "agv1",
+      "name": "รถ AGV ลำเลียง",
+      "nameEn": "AGV Transport",
+      "plcId": "plc2",
+      "status": "stopped",
+      "speed": 0,
+      "temp": 32,
+      "metricName": "ความเร็วการเดิน",
+      "unit": "%",
+      "icon": "🚜",
+      "simulation": {
+        "tempRiseRate": 0.35,
+        "tempCoolRate": 0.45,
+        "warningTemp": 78,
+        "normalTemp": 42
+      },
+      "additionalParams": {
+        "battery": { "value": 100, "unit": "%", "min": 0, "max": 100 },
+        "direction": { "value": "idle", "unit": "", "options": ["forward", "backward", "idle"] }
+      }
+    },
+    {
+      "id": "heater1",
+      "name": "ฮีตเตอร์เตาอบ",
+      "nameEn": "Oven Heater",
+      "plcId": "plc3",
+      "status": "stopped",
+      "speed": 0,
+      "temp": 45,
+      "metricName": "ระดับความร้อน",
+      "unit": "%",
+      "icon": "♨️",
+      "simulation": {
+        "tempRiseRate": 1.2,
+        "tempCoolRate": 0.1,
+        "warningTemp": 90,
+        "normalTemp": 65
+      },
+      "additionalParams": {
+        "targetTemp": { "value": 0, "unit": "°C", "min": 0, "max": 200 }
+      }
+    },
+    {
+      "id": "compressor1",
+      "name": "เครื่องปั๊มลม",
+      "nameEn": "Air Compressor",
+      "plcId": "plc3",
+      "status": "stopped",
+      "speed": 0,
+      "temp": 40,
+      "metricName": "แรงดันลม",
+      "unit": "PSI",
+      "icon": "💨",
+      "simulation": {
+        "tempRiseRate": 0.55,
+        "tempCoolRate": 0.2,
+        "warningTemp": 85,
+        "normalTemp": 55
+      },
+      "additionalParams": {
+        "pressure": { "value": 0, "unit": "PSI", "min": 0, "max": 150 }
+      }
+    },
+    {
+      "id": "crane1",
+      "name": "เครนยกสินค้า",
+      "nameEn": "Overhead Crane",
+      "plcId": "plc3",
+      "status": "stopped",
+      "speed": 0,
+      "temp": 34,
+      "metricName": "ความเร็วรอก",
+      "unit": "%",
+      "icon": "🏗️",
+      "simulation": {
+        "tempRiseRate": 0.45,
+        "tempCoolRate": 0.35,
+        "warningTemp": 80,
+        "normalTemp": 48
+      },
+      "additionalParams": {
+        "height": { "value": 0, "unit": "m", "min": 0, "max": 15 },
+        "load": { "value": 0, "unit": "kg", "min": 0, "max": 2000 }
+      }
+    },
+    {
+      "id": "light1",
+      "name": "ไฟสัญญาณเตือน",
+      "nameEn": "Tower Light",
+      "plcId": "plc3",
+      "status": "stopped",
+      "speed": 0,
+      "temp": 27,
+      "metricName": "ระดับความสว่าง",
+      "unit": "%",
+      "icon": "🚨",
+      "simulation": {
+        "tempRiseRate": 0.1,
+        "tempCoolRate": 0.8,
+        "warningTemp": 60,
+        "normalTemp": 30
+      },
+      "additionalParams": {
+        "color": { "value": "off", "unit": "", "options": ["red", "green", "yellow", "blue", "off"] }
+      }
+    },
+    {
+      "id": "chiller1",
+      "name": "เครื่องทำความเย็น",
+      "nameEn": "Chiller Unit",
+      "plcId": "plc3",
+      "status": "stopped",
+      "speed": 0,
+      "temp": 18,
+      "metricName": "ระดับความเย็น",
+      "unit": "%",
+      "icon": "❄️",
+      "simulation": {
+        "tempRiseRate": 0.2,
+        "tempCoolRate": 1.0,
+        "warningTemp": 35,
+        "normalTemp": 15
+      },
+      "additionalParams": {
+        "coolingLevel": { "value": 0, "unit": "%", "min": 0, "max": 100 }
+      }
+    }
+  ]
+}

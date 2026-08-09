@@ -40,6 +40,12 @@ export const api = {
   getGatewayLogs:      (limit = 30) => request('GET', `/command/gateway/logs?limit=${limit}`),
   getGatewayExplainer: () => request('GET', '/command/gateway/explainer'),
 
+  // ── PLC Simulator (Multi-PLC) ──
+  getPlcStatus:    () => request('GET', '/command/plc/status'),
+  getPlcTelemetry: (plcId) => request('GET', `/command/plc/telemetry/${plcId}`),
+  getDevicePlcInfo: (deviceId) => request('GET', `/command/plc/devices/${deviceId}`),
+  getPlcMapping:   () => request('GET', '/command/plc/mapping'),
+
   // ── Vocabulary ──
   getVocab: () => request('GET', '/command/vocab'),
   addDeviceAlias:  (alias, deviceId) => request('POST', '/command/vocab/device',  { alias, deviceId }),
