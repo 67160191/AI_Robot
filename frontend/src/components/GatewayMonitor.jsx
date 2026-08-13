@@ -96,7 +96,11 @@ export default function GatewayMonitor({ lastCommand }) {
     }
   };
 
-  useEffect(() => { fetchGatewayData(); }, [lastCommand]);
+  useEffect(() => { 
+    fetchGatewayData();
+    const interval = setInterval(fetchGatewayData, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (lastCommand) {

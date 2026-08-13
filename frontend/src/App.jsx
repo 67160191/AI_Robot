@@ -79,7 +79,7 @@ export default function App() {
         {/* Right — Dashboard / History / Vocab */}
         <section className="right-section">
           {activeTab === 'dashboard' && (
-            <MachineStatus refreshTrigger={refreshTrigger} />
+            <MachineStatus refreshTrigger={refreshTrigger} onCommandResult={handleCommandResult} />
           )}
           {activeTab === 'history' && (
             <CommandHistory refreshTrigger={refreshTrigger} />

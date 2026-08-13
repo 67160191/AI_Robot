@@ -117,6 +117,7 @@ aliases ที่มีอยู่แล้ว:
 - ▶ เปิด / ⏹ หยุด
 - ↺ รีเซ็ต
 - 🚨 E-Stop (เมื่อ running หรือ warning)
+*(การกดปุ่มสั่งงานจะซิงค์ข้อมูลลงตาราง Modbus Frame และส่งสัญญาณต่อไปยัง Gateway Monitor มุมขวาล่างทันที)*
 
 ---
 
@@ -168,7 +169,7 @@ DELETE /api/command/vocab/alias        → Delete alias (type + key)
 4. **PlcInfoStrip** — Badge สถานะ PLC ของแต่ละเครื่อง
 
 ### Gateway Monitor
-- **Tab: Monitor** — Signal flow, PLC status, Modbus frame, Ladder diagram
+- **Tab: Monitor** — Signal flow, PLC status (Real-time Auto-Polling), Modbus frame, Ladder diagram
 - **Tab: Network** — Topology, Protocol stack, Modbus function codes
 - **Tab: PLC Map** — Machine-to-PLC mapping viewer (ค้นหาได้)
 

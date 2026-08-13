@@ -238,7 +238,7 @@ function MachineCard({ machine, onControl }) {
   );
 }
 
-export default function MachineStatus({ refreshTrigger }) {
+export default function MachineStatus({ refreshTrigger, onCommandResult }) {
   const [machines, setMachines] = useState({});
   const [mqttStatus, setMqttStatus] = useState(null);
   const [plcSummary, setPlcSummary] = useState(null);
@@ -272,6 +272,9 @@ export default function MachineStatus({ refreshTrigger }) {
 
   const handleControl = async (device, action, params = {}) => {
     await api.directCommand(device, action, params);
+    if (onCommandResult) {
+      onCommandResult({ device, action, params, source: 'direct' }, true);
+    }
     setTimeout(fetchStatus, 300);
   };
 

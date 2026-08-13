@@ -26,8 +26,8 @@ router.post("/", async (req, res) => {
     // ── ⚡ Vocab-First: ตรวจ vocab ก่อน ส่งไป AI ──────────────────
     // ถ้า match → return ทันที (~0ms) ไม่ต้องเรียก Ollama เลย
     const vocabResult = vocabService.searchVocab(message);
-    if (vocabResult && vocabResult.found) {
-      console.log(`⚡ Vocab-first match: ${vocabResult.device} / ${vocabResult.action} (${vocabResult.source})`);
+    if (vocabResult && vocabResult.found && vocabResult.source === "custom_command") {
+      console.log(`⚡ Custom Command match: ${vocabResult.device} / ${vocabResult.action}`);
       const record = historyService.add({
         userMessage: message,
         aiMessage:   vocabResult.message || `${vocabResult.action} ${vocabResult.device}`,

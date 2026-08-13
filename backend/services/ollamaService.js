@@ -64,11 +64,6 @@ async function getModelName(forceModel = null) {
 
 // ─── Build system prompt (cached — rebuild เฉพาะเมื่อ vocab เปลี่ยน) ─
 function getSystemPrompt() {
-  // ตรวจว่า vocab ถูกแก้ไขหรือยัง (ถ้าเป็น ครั้งแรก หรือ vocab เปลี่ยน)
-  if (_cachedPrompt && !vocabService.isPromptDirty()) {
-    return _cachedPrompt; // ใช้ cache
-  }
-
   const vocab = vocabService.getAll();
 
   const deviceAliasList = Object.entries(vocab.deviceAliases)
@@ -118,6 +113,8 @@ ${customCmdList || "  (ยังไม่มี)"}
 3. ถ้าไม่ใช่คำสั่งควบคุม: {"device":null,"action":"chat","params":{},"message":"<ตอบกลับ>"}
 4. ค่าความเร็ว (params.speed): ดึงตัวเลขจากคำสั่ง เช่น "80%" หรือ "80" ให้ speed=80
    - ถ้ามีชื่ออุปกรณ์มีเลข เช่น "สายพาน 1" ให้ใช้เลขหลัง (80) ไม่ใช่เลขในชื่ออุปกรณ์ (1)
+   - ถ้ามีคำว่า "เต็มที่", "เต็มร้อย", "สูงสุด", "เต็มพิกัด" ให้ speed=100
+   - ถ้ามีคำว่า "ครึ่งหนึ่ง", "ครึ่งนึง", "ห้าสิบ" ให้ speed=50
    - ตัวอย่าง: "สายพาน 1 ความเร็ว 80" → speed=80 (ไม่ใช่ 1)
 5. ระบุ device id ให้ตรงที่สุด (conveyor1 vs conveyor2)
 
@@ -214,6 +211,19 @@ async function parseCommand(userMessage, forceModel = null) {
     if (safeResult.params.speed !== undefined) {
       const spd = parseInt(safeResult.params.speed, 10);
       safeResult.params.speed = isNaN(spd) ? 50 : Math.max(0, Math.min(100, spd));
+    } else {
+      // ถ้า AI ลืมส่ง speed มา ให้ลองดึงจากคำพูด
+      const txt = userMessage.toLowerCase();
+      if (/เต็มที่|เต็มร้อย|สูงสุด|สุดๆ|สุดกำลัง|ร้อยเปอร์เซ็น|แม็กซ์|แม็ก|แรงสุด|ร้อยเปอ|เต็มแม็ก|เต็มพิกัด/.test(txt)) {
+        safeResult.params.speed = 100;
+        if (safeResult.action === "chat") safeResult.action = "set_speed";
+      } else if (/ครึ่งนึง|ครึ่งหนึ่ง|ห้าสิบ/.test(txt)) {
+        safeResult.params.speed = 50;
+        if (safeResult.action === "chat") safeResult.action = "set_speed";
+      } else if (/เบาๆ|นิดเดียว|ต่ำสุด|น้อยสุด|ช้าๆ/.test(txt)) {
+        safeResult.params.speed = 20;
+        if (safeResult.action === "chat") safeResult.action = "set_speed";
+      }
     }
 
     return { success: true, data: safeResult };
