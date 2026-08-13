@@ -3,7 +3,7 @@
 // ============================================================
 import { useState, useRef, useEffect } from 'react';
 import { api } from '../services/api';
-import { playSuccessSound } from '../utils/audioFX';
+import { playSuccessSound, playSendSound } from '../utils/audioFX';
 import './ChatPanel.css';
 
 const QUICK_PROMPTS = [
@@ -49,6 +49,9 @@ export default function ChatPanel({ onCommandResult, selectedModel }) {
   const handleSend = async () => {
     const text = input.trim();
     if (!text || isLoading) return;
+
+    // เล่นเสียงตอนกดส่ง (Blip)
+    playSendSound();
 
     setInput('');
     addMessage({ role: 'user', content: text });
