@@ -3,6 +3,7 @@
 // ============================================================
 import { useState, useRef, useEffect } from 'react';
 import { api } from '../services/api';
+import { playSuccessSound } from '../utils/audioFX';
 import './ChatPanel.css';
 
 const QUICK_PROMPTS = [
@@ -97,6 +98,7 @@ export default function ChatPanel({ onCommandResult, selectedModel }) {
       const result = await api.executeCommand({ id: pendingId, device, action, params: params || {} });
 
       if (result.success) {
+        playSuccessSound();
         const execMsg = result.data?.machineResult?.message || `${action} ${device} สำเร็จ`;
         updateMessage(msgId, { isConfirming: false, isConfirmed: true });
         addMessage({ role: 'ai', content: `✅ ${execMsg}`, isSuccess: true });

@@ -53,4 +53,7 @@ export const api = {
   addCustomCommand: (data)           => request('POST', '/command/vocab/command', data),
   deleteCustomCommand: (id)          => request('DELETE', `/command/vocab/command/${id}`),
   deleteAlias: (type, key)           => request('DELETE', '/command/vocab/alias', { type, key }),
+
+  // ── Scenario Simulation ──
+  triggerScenario: (type = 'emergency') => request('POST', '/command/scenario', { type })
 };

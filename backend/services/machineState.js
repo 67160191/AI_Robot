@@ -234,5 +234,19 @@ module.exports = {
       default:
         return { success: false, error: `ไม่รู้จัก action: ${action}` };
     }
+  },
+
+  triggerEmergencyScenario: () => {
+    // หาเครื่องที่ running อยู่, ถ้าไม่มีเอาเครื่องที่มี ID เป็น 'heater1' หรืออันแรกสุด
+    let target = Object.values(machineState).find(m => m.status === 'running');
+    if (!target) target = machineState['heater1'] || Object.values(machineState)[0];
+
+    if (target) {
+      target.temp = 100;
+      target.status = 'warning';
+      plcSimulator.updateDeviceStatus(target.id, 'warning', { temp: 100 });
+      return { success: true, message: `🚨 จำลองเหตุฉุกเฉิน: อุณหภูมิ ${target.name} พุ่งสูงถึง 100°C!`, device: target.id };
+    }
+    return { success: false, error: 'ไม่พบเครื่องจักรที่เหมาะสมในการจำลองเหตุการณ์' };
   }
 };

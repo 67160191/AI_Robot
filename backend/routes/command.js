@@ -273,4 +273,34 @@ router.delete("/vocab/alias", (req, res) => {
   res.json({ success: true });
 });
 
+// ─────────────────────────────────────────────────────────
+// POST /api/command/scenario — Trigger emergency scenario
+// ─────────────────────────────────────────────────────────
+router.post("/scenario", (req, res) => {
+  try {
+    const result = machineState.triggerEmergencyScenario();
+    
+    if (result.success) {
+      // บันทึก history ด้วยเพื่อให้เห็นใน log ว่าเกิดการจำลองเหตุการณ์
+      historyService.add({
+        userMessage: "🚨 [SYSTEM TRIGGER] จำลองเหตุฉุกเฉิน",
+        aiMessage: result.message,
+        device: result.device,
+        action: "scenario_overheat",
+        params: { temp: 100 },
+        model: "system",
+        source: "system",
+        executed: true,
+        success: true
+      });
+      res.json(result);
+    } else {
+      res.status(400).json(result);
+    }
+  } catch (error) {
+    console.error("Scenario error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

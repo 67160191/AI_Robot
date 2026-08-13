@@ -2,7 +2,9 @@
 // MachineStatus Component - Real-time Dashboard
 // ============================================================
 import { useState, useEffect } from 'react';
+import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts';
 import { api } from '../services/api';
+import { playSirenSound } from '../utils/audioFX';
 import './MachineStatus.css';
 
 const STATUS_LABEL = {
@@ -31,6 +33,32 @@ function TempGauge({ value, max = 100 }) {
         />
       </div>
       <span className="gauge-label" style={{ color }}>{value}°C</span>
+    </div>
+  );
+}
+
+function MiniTempChart({ data = [] }) {
+  if (data.length < 2) return <div style={{ height: '30px', opacity: 0.3, fontSize: '10px' }}>Loading chart...</div>;
+  
+  // หาค่าสีตามอุณหภูมิล่าสุด
+  const lastTemp = data[data.length - 1]?.temp || 0;
+  const strokeColor = lastTemp > 80 ? 'var(--accent-red)' : lastTemp > 60 ? 'var(--accent-yellow)' : 'var(--primary)';
+
+  return (
+    <div className="mini-chart-wrap" style={{ height: '30px', width: '100%', marginTop: '4px' }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data}>
+          <YAxis domain={['dataMin - 5', 'dataMax + 5']} hide />
+          <Line 
+            type="monotone" 
+            dataKey="temp" 
+            stroke={strokeColor} 
+            strokeWidth={2} 
+            dot={false}
+            isAnimationActive={false}
+          />
+        </LineChart>
+      </ResponsiveContainer>
     </div>
   );
 }
@@ -171,7 +199,7 @@ function PlcSummaryCard({ plcData }) {
   );
 }
 
-function MachineCard({ machine, onControl }) {
+function MachineCard({ machine, historyData, onControl }) {
   const isRunning = machine.status === 'running';
   const isWarning = machine.status === 'warning';
   const isError = machine.status === 'error';
@@ -200,6 +228,7 @@ function MachineCard({ machine, onControl }) {
         <div className="metric">
           <span className="metric-label">🌡️ อุณหภูมิ</span>
           <TempGauge value={machine.temp} />
+          <MiniTempChart data={historyData} />
         </div>
         <div className="metric metric-speed">
           <span className="metric-label">{getMetricIcon(metricLabel)} {metricLabel}</span>
@@ -240,6 +269,7 @@ function MachineCard({ machine, onControl }) {
 
 export default function MachineStatus({ refreshTrigger, onCommandResult }) {
   const [machines, setMachines] = useState({});
+  const [historyData, setHistoryData] = useState({});
   const [mqttStatus, setMqttStatus] = useState(null);
   const [plcSummary, setPlcSummary] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(null);
@@ -251,6 +281,16 @@ export default function MachineStatus({ refreshTrigger, onCommandResult }) {
       setMachines(result.data.machines);
       setMqttStatus(result.data.mqtt);
       setLastUpdate(new Date());
+
+      setHistoryData(prev => {
+        const next = { ...prev };
+        const now = Date.now();
+        Object.values(result.data.machines).forEach(m => {
+          if (!next[m.id]) next[m.id] = [];
+          next[m.id] = [...next[m.id], { time: now, temp: m.temp }].slice(-15);
+        });
+        return next;
+      });
     }
     // Fetch PLC summary
     const plcResult = await api.getPlcStatus();
@@ -278,6 +318,17 @@ export default function MachineStatus({ refreshTrigger, onCommandResult }) {
     setTimeout(fetchStatus, 300);
   };
 
+  const handleScenario = async () => {
+    const result = await api.triggerScenario();
+    if (result.success) {
+      playSirenSound();
+      if (onCommandResult) {
+        onCommandResult({ device: result.data?.device, action: 'scenario_overheat', params: { temp: 100 }, source: 'system' }, true);
+      }
+    }
+    setTimeout(fetchStatus, 300);
+  };
+
   const machineList = Object.values(machines);
   const runningCount = machineList.filter(m => m.status === 'running').length;
   const warningCount = machineList.filter(m => m.status === 'warning').length;
@@ -298,6 +349,7 @@ export default function MachineStatus({ refreshTrigger, onCommandResult }) {
           </span>
           <span className="summary-label">Stopped</span>
         </div>
+        
         <div className="summary-divider" />
         <div className="summary-item">
           <span className="summary-val" style={{ color: 'var(--accent-yellow)' }}>{warningCount}</span>
@@ -311,10 +363,19 @@ export default function MachineStatus({ refreshTrigger, onCommandResult }) {
         <div className="summary-divider" />
         <div className="mqtt-status-badge">
           <span className={`status-dot ${mqttStatus?.connected ? 'running' : 'stopped'}`}></span>
-          <span className="mono" style={{ fontSize: '11px' }}>
-            MQTT: {mqttStatus?.mode || 'N/A'}
+          <span className="mqtt-text" style={{ color: mqttStatus?.connected ? 'var(--status-running)' : 'var(--text-muted)' }}>
+            {mqttStatus?.connected ? 'MQTT Connected' : 'MQTT Offline'}
           </span>
         </div>
+        
+        <div style={{ flex: 1 }} />
+        <button 
+          className="btn btn-danger" 
+          style={{ padding: '6px 12px', fontSize: '13px', fontWeight: 'bold' }}
+          onClick={handleScenario}
+        >
+          🚨 จำลองเหตุฉุกเฉิน
+        </button>
         {lastUpdate && (
           <span className="last-update mono">
             🔄 {lastUpdate.toLocaleTimeString('th-TH')}
@@ -339,11 +400,12 @@ export default function MachineStatus({ refreshTrigger, onCommandResult }) {
         </div>
       ) : (
         <div className="machine-grid">
-          {machineList.map(machine => (
-            <MachineCard
-              key={machine.id}
-              machine={machine}
-              onControl={handleControl}
+          {machineList.map(m => (
+            <MachineCard 
+              key={m.id} 
+              machine={m} 
+              historyData={historyData[m.id]}
+              onControl={handleControl} 
             />
           ))}
         </div>
