@@ -4,6 +4,7 @@
 // ============================================================
 
 const plcSimulator = require('./plcSimulator');
+const factoryIoService = require('./factoryIoService');
 const fs = require('fs');
 const path = require('path');
 
@@ -147,6 +148,7 @@ module.exports = {
         machine.status = "running";
         machine.speed = params.speed || 60;
         plcSimulator.updateDeviceStatus(deviceId, "running", { temp: machine.temp });
+        factoryIoService.writeDeviceState(deviceId, true);
         return { 
           success: true, 
           message: `เปิด ${machine.name} แล้ว (${machine.metricName}: ${machine.speed}${machine.unit})`,
@@ -160,6 +162,7 @@ module.exports = {
         machine.status = "stopped";
         machine.speed = 0;
         plcSimulator.updateDeviceStatus(deviceId, "stopped", { temp: machine.temp });
+        factoryIoService.writeDeviceState(deviceId, false);
         return { 
           success: true, 
           message: `หยุด ${machine.name} แล้ว`,
@@ -222,6 +225,7 @@ module.exports = {
         machine.status = "error";
         machine.speed = 0;
         plcSimulator.updateDeviceStatus(deviceId, "error", { temp: machine.temp });
+        factoryIoService.writeDeviceState(deviceId, false);
         return { success: true, message: `⚠️ Emergency Stop: ${machine.name}` };
 
       case "reset":
@@ -229,6 +233,7 @@ module.exports = {
         machine.speed = 0;
         machine.temp = machine.simulation?.normalTemp || 30;
         plcSimulator.updateDeviceStatus(deviceId, "stopped", { temp: machine.temp });
+        factoryIoService.writeDeviceState(deviceId, false);
         return { success: true, message: `Reset ${machine.name} เรียบร้อย` };
 
       default:

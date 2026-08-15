@@ -6,7 +6,7 @@ const express = require("express");
 const cors = require("cors");
 const commandRouter   = require("./routes/command");
 const ollamaService   = require("./services/ollamaService");
-
+const factoryIoService = require("./services/factoryIoService");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -77,6 +77,9 @@ app.listen(PORT, () => {
 
   // 🔥 Warm-up: โหลด model เข้า memory ล่วงหน้า
   setTimeout(() => ollamaService.warmUp(), 2000);
+
+  // 🔌 เชื่อมต่อ Factory I/O Modbus TCP
+  factoryIoService.connect();
 });
 
 
