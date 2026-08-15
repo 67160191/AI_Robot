@@ -21,83 +21,7 @@ const STATUS_COLOR = {
   error: 'var(--status-error)'
 };
 
-function TempGauge({ value, max = 100 }) {
-  const pct = Math.min((value / max) * 100, 100);
-  const color = value > 80 ? 'var(--accent-red)' : value > 60 ? 'var(--accent-yellow)' : 'var(--primary)';
-  return (
-    <div className="temp-gauge">
-      <div className="gauge-bar">
-        <div
-          className="gauge-fill"
-          style={{ width: `${pct}%`, background: color, boxShadow: `0 0 8px ${color}` }}
-        />
-      </div>
-      <span className="gauge-label" style={{ color }}>{value}°C</span>
-    </div>
-  );
-}
 
-function MiniTempChart({ data = [] }) {
-  if (data.length < 2) return <div style={{ height: '30px', opacity: 0.3, fontSize: '10px' }}>Loading chart...</div>;
-  
-  // หาค่าสีตามอุณหภูมิล่าสุด
-  const lastTemp = data[data.length - 1]?.temp || 0;
-  const strokeColor = lastTemp > 80 ? 'var(--accent-red)' : lastTemp > 60 ? 'var(--accent-yellow)' : 'var(--primary)';
-
-  return (
-    <div className="mini-chart-wrap" style={{ height: '30px', width: '100%', marginTop: '4px' }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data}>
-          <YAxis domain={['dataMin - 5', 'dataMax + 5']} hide />
-          <Line 
-            type="monotone" 
-            dataKey="temp" 
-            stroke={strokeColor} 
-            strokeWidth={2} 
-            dot={false}
-            isAnimationActive={false}
-          />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function MetricGauge({ value, unit = "%" }) {
-  const pct = Math.min(value, 100);
-  return (
-    <div className="speed-ring-wrap">
-      <svg viewBox="0 0 60 60" className="speed-ring">
-        <circle cx="30" cy="30" r="24" fill="none" stroke="var(--bg-surface)" strokeWidth="5" />
-        <circle
-          cx="30" cy="30" r="24"
-          fill="none"
-          stroke="var(--primary)"
-          strokeWidth="5"
-          strokeDasharray={`${(pct / 100) * 150.8} 150.8`}
-          strokeLinecap="round"
-          transform="rotate(-90 30 30)"
-          style={{ filter: 'drop-shadow(0 0 4px var(--primary))' }}
-        />
-      </svg>
-      <div className="speed-ring-label">
-        <span className="speed-val mono">{pct}</span>
-        <span className="speed-unit" style={{ fontSize: unit.length > 2 ? '9px' : '11px' }}>{unit}</span>
-      </div>
-    </div>
-  );
-}
-
-function getMetricIcon(metricName = '') {
-  if (metricName.includes('ร้อน')) return '🔥';
-  if (metricName.includes('แรงดัน')) return '💨';
-  if (metricName.includes('สว่าง') || metricName.includes('ไฟ')) return '💡';
-  if (metricName.includes('เย็น')) return '❄️';
-  if (metricName.includes('ไหล')) return '💧';
-  if (metricName.includes('ลม')) return '🌀';
-  if (metricName.includes('รอก')) return '🏗️';
-  return '⚡';
-}
 
 function PlcInfoStrip({ plcInfo }) {
   if (!plcInfo) return null;
@@ -224,15 +148,30 @@ function MachineCard({ machine, historyData, onControl }) {
         </div>
       </div>
 
-      <div className="machine-metrics">
-        <div className="metric">
-          <span className="metric-label">🌡️ อุณหภูมิ</span>
-          <TempGauge value={machine.temp} />
-          <MiniTempChart data={historyData} />
+      <div className="machine-metrics-list">
+        <div className="metric-row">
+          <span className="metric-key">Speed</span>
+          <span className="metric-val mono">{machine.speed}{unit}</span>
         </div>
-        <div className="metric metric-speed">
-          <span className="metric-label">{getMetricIcon(metricLabel)} {metricLabel}</span>
-          <MetricGauge value={machine.speed} unit={unit} />
+        <div className="metric-row">
+          <span className="metric-key">Temperature</span>
+          <span className="metric-val mono">{machine.temp}°C</span>
+        </div>
+        <div className="metric-row">
+          <span className="metric-key">Current</span>
+          <span className="metric-val mono">{(machine.current || 0).toFixed(1)}A</span>
+        </div>
+        <div className="metric-row">
+          <span className="metric-key">Sensor</span>
+          <span className="metric-val mono" style={{ color: isRunning ? 'var(--accent-green)' : 'var(--text-muted)' }}>
+            {isRunning ? 'ON' : 'OFF'}
+          </span>
+        </div>
+        <div className="metric-row">
+          <span className="metric-key">Alarm</span>
+          <span className="metric-val mono" style={{ color: isError || isWarning ? 'var(--accent-red)' : 'var(--accent-green)' }}>
+            {isError || isWarning ? 'ALARM' : 'NORMAL'}
+          </span>
         </div>
       </div>
 
