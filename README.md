@@ -1,300 +1,216 @@
-# 🤖 AI Robot Operator — Multi-PLC Simulation Prototype
+# AI Robot Operator - Multi-PLC Simulation Prototype
 
-ระบบควบคุมเครื่องจักรผ่าน AI Chat โดยไม่ต้องมี Hardware PLC จริง — ทำงานแบบ **Simulation/Dashboard** 100%
+ระบบควบคุมเครื่องจักรผ่าน AI Chat โดยไม่ต้องมี Hardware PLC จริง ทำงานแบบ Simulation/Dashboard 100%
 
 ---
 
-## ✨ ฟีเจอร์หลัก
+## ภาพรวมโปรเจค (Project Overview)
 
-| ฟีเจอร์ | สถานะ | รายละเอียด |
-|---------|-------|-----------|
-| AI Command Parsing | ✅ | Ollama LLM แปลภาษาธรรมชาติเป็นคำสั่ง JSON |
-| Vocab Matching (Fast Path) | ✅ | Match aliases ~0ms ไม่ต้องเรียก AI |
-| Multi-PLC Architecture | ✅ | 3 PLC Stations, 12 Machines |
-| Machine State Simulation | ✅ | อุณหภูมิ/Parameters อัพเดทอัตโนมัติ |
-| Real-time Dashboard | ✅ | การ์ดเครื่องจักร 12 ตัว + PLC Summary Cards |
-| Command Confirmation | ✅ | AI Parse → Confirm Dialog → Execute |
-| Gateway Monitor | ✅ | Signal flow, Modbus Frame, Ladder Diagram, PLC Map |
-| Vocabulary Manager | ✅ | เพิ่ม/ลบ aliases + custom commands |
+โปรเจคนี้คือ Simulation/Dashboard-only prototype ที่จำลองการทำงานของระบบควบคุมเครื่องจักรผ่าน AI โดยไม่ต้องมี Hardware PLC จริง
 
-## 🏭 Multi-PLC Configuration
+สิ่งที่ทำงานได้จริงใน Simulation:
+- AI Command Parsing ผ่าน Ollama LLM
+- Vocab Matching (Fast Path, Response ~0ms)
+- Machine State Management แบบ In-Memory
+- Temperature/Parameter Simulation (อัพเดทค่าแบบ Real-time)
+- Multi-PLC Architecture (จำลอง 3 PLCs, 12 Machines)
+- Dashboard Real-time Updates 
+- Command History และ Confirmation Flow
+- Vocabulary Manager สำหรับจัดการคำสั่งและคำพ้องความหมาย
+- PLC Simulator และ Gateway Monitor
 
-### PLC Stations (3 ตัว)
+สิ่งที่ทำงานแบบ Simulation เท่านั้น (ไม่มี Hardware จริง):
+- MQTT Publishing (แสดงเพียง payload ที่ "จะถูกส่ง")
+- PLC Modbus TCP Write/Read (มีข้อมูล Mapping ครบ แต่ไม่มีการสื่อสารจริงกับอุปกรณ์)
+- Machine Feedback (จำลองพฤติกรรมอุณหภูมิขึ้น/ลง อัตโนมัติในหน่วยความจำ)
 
-| Station | Brand | Model | IP | Devices |
-|---------|-------|-------|-----|---------|
-| **PLC-01** | 🔴 Mitsubishi FX5U | FX5U-32MT/ESS | 192.168.1.20 | 5 machines |
-| **PLC-02** | 🔵 Siemens S7-1200 | CPU 1214C | 192.168.1.21 | 2 machines |
-| **PLC-03** | 🟢 Schneider Modicon | M221 | 192.168.1.22 | 5 machines |
+---
 
-### Machines (12 ตัว) พร้อม Parameters เฉพาะ
+## Multi-PLC Configuration
+
+ระบบได้ถูกตั้งค่าให้มี PLC 3 สถานี และ เครื่องจักร 12 เครื่อง 
+
+### PLC Stations (3 สถานี)
+
+| สถานี | ชื่อกลุ่ม | ยี่ห้อ | รุ่น | IP Address | จำนวนเครื่องจักร |
+|---------|------|-------|-------|-----|---------|
+| PLC-01 | Main Assembly Line | Mitsubishi FX5U | FX5U-32MT/ESS | 192.168.1.20 | 5 |
+| PLC-02 | Robot & AGV Cell | Siemens S7-1200 | CPU 1214C | 192.168.1.21 | 2 |
+| PLC-03 | Utility & Environmental | Schneider Modicon | M221 | 192.168.1.22 | 5 |
+
+### Machines (12 เครื่องจักร)
 
 #### PLC-01 (Mitsubishi FX5U)
-- **conveyor1** — สายพานลำเลียง 1 → `speed%, temp°C`
-- **conveyor2** — สายพานลำเลียง 2 → `speed%, temp°C`
-- **motor1** — มอเตอร์ขับเคลื่อนหลัก → `current(A), voltage(V)`
-- **pump1** — ปั๊มน้ำหล่อเย็น → `speed%, temp°C`
-- **fan1** — พัดลมระบายความร้อน → `coolingLevel, temp°C`
+- conveyor1: สายพานลำเลียง 1 (Parameters: speed%, temp)
+- conveyor2: สายพานลำเลียง 2 (Parameters: speed%, temp)
+- motor1: มอเตอร์ขับเคลื่อนหลัก (Parameters: current(A), voltage(V))
+- pump1: ปั๊มน้ำหล่อเย็น (Parameters: speed%, temp)
+- fan1: พัดลมระบายความร้อน (Parameters: coolingLevel, temp)
 
 #### PLC-02 (Siemens S7-1200)
-- **robot1** — หุ่นยนต์แขนกล → `position, gripper%`
-- **agv1** — รถ AGV ลำเลียง → `battery(%), direction`
+- robot1: หุ่นยนต์แขนกลประกอบชิ้นส่วน (Parameters: position, gripper%)
+- agv1: รถ AGV ลำเลียง (Parameters: battery(%), direction)
 
 #### PLC-03 (Schneider M221)
-- **heater1** — เตาอบ → `targetTemp°C`
-- **compressor1** — ปั๊มลมแรงดันสูง → `pressure(PSI)`
-- **crane1** — เครนยกสินค้า → `load(kg), height(m)`
-- **light1** — ไฟสัญญาณเตือน → `color (off/red/yellow/green)`
-- **chiller1** — เครื่องทำความเย็น → `speed%, temp°C`
+- heater1: เตาอบอบชิ้นส่วน (Parameters: targetTemp)
+- compressor1: ปั๊มลมแรงดันสูง (Parameters: pressure(PSI))
+- crane1: เครนยกสินค้า (Parameters: load(kg), height(m))
+- light1: ไฟสัญญาณเตือน (Parameters: color - off/red/yellow/green)
+- chiller1: เครื่องทำความเย็นหลัก (Parameters: speed%, temp)
 
 ---
 
-## 🚀 การติดตั้งและใช้งาน
+## สถาปัตยกรรมระบบ (Architecture)
 
-### ข้อกำหนดขั้นต่ำ
+การทำงานของระบบถูกแบ่งเป็นฝั่ง Frontend (React) และ Backend API (Express) 
+
+```text
+[Frontend] <---(HTTP/REST/Polling)---> [Backend API]
+                                            |
+                                       [Services] (machineState, plcSimulator, gatewayService, ollamaService)
+                                            |
+                                  [Simulated PLC States] (12 Machines / 3 Stations)
+```
+
+### กระแสข้อมูลจำลอง (Simulation Data Flow)
+- plcSimulator.js เป็นเอนจินจำลองการทำงาน สร้าง PLC state แบบ in-memory และจัดการข้อมูล Telemetry
+- machineState.js เป็นตัวจัดการ state หลัก รับผิดชอบเรื่องการอัพเดทค่าและจำลองอุณหภูมิ (อัพเดททุก 3 วินาที)
+- ข้อมูลจำลองทั้งหมดจะถูกดึงไปแสดงผลบน Dashboard แบบ Real-time ผ่านการ Polling
+
+---
+
+## ฟีเจอร์ที่น่าสนใจ
+
+### ระบบประมวลผลคำสั่ง (AI Command Parsing Flow)
+ผู้ใช้สามารถพิมพ์คำสั่งในรูปแบบภาษาธรรมชาติ เช่น "เปิดสายพาน 1 ความเร็ว 80"
+1. Frontend ส่งคำสั่งผ่าน POST /api/command 
+2. ระบบจะพยายามจับคู่กับ Vocab Service ก่อน (Fast path) 
+3. หากไม่พบ จะส่งคำสั่งไปให้ Ollama LLM ประมวลผลและแปลงเป็น JSON
+4. ส่งข้อมูลกลับให้ Frontend แสดง Confirm Dialog ให้ผู้ใช้ยืนยัน
+5. เมื่อยืนยัน ระบบจะปรับเปลี่ยน State และอัพเดทไปยัง PLC Simulator
+
+### Dashboard 
+- MachineStatus Panel: แสดงการ์ดสรุปสถานะของทั้ง 3 PLC Station พร้อมแสดงการ์ดเครื่องจักรทั้ง 12 ตัว สีของการ์ดจะสอดคล้องกับ PLC Station ที่สังกัดอยู่
+- Gateway Monitor: หน้าต่างสำหรับมอนิเตอร์ Signal Flow, Modbus Frame, และ Network Topology รวมถึงมีเครื่องมือดู Machine-to-PLC Mapping
+- Quick Control Buttons: ทุกเครื่องจักรจะมีปุ่มให้สามารถ เปิด/หยุด/รีเซ็ต หรือ E-Stop ได้ทันทีโดยไม่ต้องผ่าน AI
+
+---
+
+## โครงสร้างไฟล์และโฟลเดอร์
+
+```text
+backend/
+├── config/           (plcs.json และ machines.json สำหรับตั้งค่าระบบ)
+├── services/         (บริการต่างๆ เช่น plcSimulator.js, machineState.js, gatewayService.js)
+├── routes/           (API Endpoints ทั้งหมด)
+└── server.js         (Express server entry point)
+
+frontend/src/
+├── components/       (UI Components เช่น MachineStatus, GatewayMonitor, ChatPanel)
+├── services/         (API client)
+└── App.jsx           (Main app layout)
+```
+
+---
+
+## API Endpoints หลัก
+
+PLC Simulator APIs:
+- GET /api/command/plc/status - ข้อมูลสรุปของ 3 PLC stations
+- GET /api/command/plc/telemetry/:plcId - ข้อมูล Telemetry เชิงลึกของ PLC
+- GET /api/command/plc/devices/:deviceId - ข้อมูลอ้างอิง Device-to-PLC
+- GET /api/command/plc/mapping - สรุป Mapping ทั้งหมดในระบบ
+
+Command APIs:
+- POST /api/command - ส่งคำสั่งให้ AI ประมวลผลเป็น JSON
+- POST /api/command/execute - ยืนยันการสั่งการเครื่องจักร
+- POST /api/command/direct - สั่งการเครื่องจักรโดยตรงผ่านปุ่มบน UI (ไม่ผ่าน AI)
+- GET /api/command/status - ตรวจสอบสถานะเครื่องจักรทั้งหมด
+
+Gateway APIs:
+- GET /api/command/gateway/status - สถานะการทำงานของ Gateway
+- GET /api/command/gateway/logs - บันทึก Event logs ต่างๆ
+
+Vocabulary APIs:
+- GET /api/command/vocab - ดึงข้อมูลคำพ้องทั้งหมด
+- POST /api/command/vocab/... - เพิ่มข้อมูลคำสั่งและคำพ้อง
+
+---
+
+## การติดตั้งและเริ่มใช้งาน
+
+ข้อกำหนดขั้นต่ำ:
 - Node.js 18+
-- Ollama (สำหรับ AI parsing) — หรือไม่ก็ใช้ Vocab Matching ได้
+- Ollama (สำหรับ AI Parsing, ถ้าไม่ใช้จะมีเพียง Vocab Matching)
 
-### 1. ติดตั้ง Dependencies
-
+1. ติดตั้ง Dependencies:
+สำหรับ Backend:
 ```bash
-# Backend
 cd backend
-npm install
-
-# Frontend  
-cd ../frontend
 npm install
 ```
 
-### 2. ติดตั้ง Ollama (ถ้าต้องการ AI)
-
+สำหรับ Frontend:
 ```bash
-# ดาวน์โหลด: https://ollama.ai
-# เปิด terminal แล้วรัน:
+cd frontend
+npm install
+```
+
+2. ติดตั้งและดึงข้อมูลโมเดล Ollama (หากต้องการใช้งาน AI Parsing):
+```bash
 ollama pull llama3.2
 ```
 
-### 3. รัน Application
-
+3. เริ่มการทำงาน:
+เปิด Terminal ที่ 1 สำหรับ Backend:
 ```bash
-# Terminal 1 — Backend
 cd backend
 npm start
-# → http://localhost:3001
+```
+(เซิร์ฟเวอร์จะเปิดที่พอร์ต 3001)
 
-# Terminal 2 — Frontend
+เปิด Terminal ที่ 2 สำหรับ Frontend:
+```bash
 cd frontend
 npm run dev
-# → http://localhost:5173
 ```
+(แอปพลิเคชันจะเปิดที่พอร์ต 5173 สามารถเข้าผ่านเบราว์เซอร์ได้ที่ http://localhost:5173)
 
 ---
 
-## 📖 การใช้งาน
+## การปรับแต่งระบบเพิ่มเติม
 
-### 1. AI Chat Commands (ผ่าน Ollama)
-พิมพ์ภาษาธรรมชาติในช่องแชท:
-```
-เปิดสายพาน 1 ความเร็ว 80
-ปิดมอเตอร์หลัก
-ตั้งอุณหภูมิเตาอบเป็น 150
-เปิดทั้งหมด
-status เครื่องจักรทุกตัว
-```
-
-### 2. Vocab Matching (ไม่ต้องใช้ AI)
-aliases ที่มีอยู่แล้ว:
-```
-เปิด/เริ่ม/start → start
-ปิด/หยุด/stop → stop
-ความเร็ว/speed → set_speed
-อุณหภูมิ/temp → set_target_temp
-```
-
-### 3. Quick Control Buttons
-ใน Dashboard แต่ละเครื่องจักรมีปุ่ม:
-- ▶ เปิด / ⏹ หยุด
-- ↺ รีเซ็ต
-- 🚨 E-Stop (เมื่อ running หรือ warning)
-*(การกดปุ่มสั่งงานจะซิงค์ข้อมูลลงตาราง Modbus Frame และส่งสัญญาณต่อไปยัง Gateway Monitor มุมขวาล่างทันที)*
+ระบบถูกออกแบบให้สามารถปรับแต่งได้ง่ายโดยไม่ต้องแก้โค้ดลอจิก:
+1. การเพิ่มเครื่องจักรใหม่: สามารถเพิ่ม Device เข้าไปในไฟล์ `backend/config/plcs.json` และกำหนดพารามิเตอร์ใน `backend/config/machines.json`
+2. การปรับเปลี่ยนพารามิเตอร์: เข้าไปแก้ไขได้ที่ฟิลด์ `additionalParams` ของเครื่องจักรแต่ละตัวในไฟล์ config จากนั้นให้เริ่มต้นระบบ Backend ใหม่
 
 ---
 
-## 🔌 API Endpoints
+## เทคโนโลยีที่ใช้งาน
 
-### PLC Simulator APIs (ใหม่)
-```
-GET  /api/command/plc/status           → PLC summary (3 stations)
-GET  /api/command/plc/telemetry/:plcId → PLC telemetry data
-GET  /api/command/plc/devices/:deviceId → Device-to-PLC mapping
-GET  /api/command/plc/mapping          → Full mapping object
-```
-
-### Command APIs
-```
-POST /api/command                      → AI parse (no execute)
-POST /api/command/execute              → Execute with confirmation
-POST /api/command/direct               → Quick control (no AI)
-GET  /api/command/status               → All machines + MQTT + gateway
-GET  /api/command/history              → Command history
-GET  /api/command/models               → Available Ollama models
-```
-
-### Gateway APIs
-```
-GET  /api/command/gateway/status       → Gateway config + simPLCs
-GET  /api/command/gateway/logs         → Event logs
-GET  /api/command/gateway/explainer    → PLC languages reference
-```
-
-### Vocabulary APIs
-```
-GET    /api/command/vocab              → All vocab data
-POST   /api/command/vocab/device       → Add device alias
-POST   /api/command/vocab/action       → Add action alias
-POST   /api/command/vocab/command      → Add custom command
-DELETE /api/command/vocab/command/:id  → Delete custom command
-DELETE /api/command/vocab/alias        → Delete alias (type + key)
-```
+- Backend: Node.js, Express.js, Ollama, UUID
+- Frontend: React 18, Vite, CSS Variables
 
 ---
 
-## 🎨 Dashboard Components
+## ข้อจำกัดของ Prototype รุ่นปัจจุบัน
 
-### MachineStatus Panel
-1. **PLC Summary Cards** — แสดง 3 การ์ด (สถานะทุก PLC)
-2. **Summary Bar** — Running / Stopped / Warning / Error counts
-3. **Machine Grid** — การ์ดเครื่องจักร 12 ตัว + real-time updates
-4. **PlcInfoStrip** — Badge สถานะ PLC ของแต่ละเครื่อง
-
-### Gateway Monitor
-- **Tab: Monitor** — Signal flow, PLC status (Real-time Auto-Polling), Modbus frame, Ladder diagram
-- **Tab: Network** — Topology, Protocol stack, Modbus function codes
-- **Tab: PLC Map** — Machine-to-PLC mapping viewer (ค้นหาได้)
+- ข้อมูลทั้งหมดเป็นการจำลอง ไม่มี Hardware หรือการส่งสัญญาณออกไปจริง
+- เนื่องจากใช้แบบ In-memory สถานะและการเปลี่ยนแปลงทั้งหมดจะสูญหายหากมีการรีสตาร์ทแอปพลิเคชัน
+- หากต้องการฟีเจอร์แปลภาษาธรรมชาติให้เป็น JSON อย่างสมบูรณ์ ต้องติดตั้ง Ollama เป็นเซอร์วิสภายนอก
+- MQTT ทำงานอยู่ในโหมดจำลอง ไม่มีการส่งข้อความไปยัง Broker จริง
 
 ---
 
-## 📊 Simulation Features
+## แนวทางการพัฒนาต่อในอนาคต
 
-### Temperature Simulation
-- Running → อุณหภูมิขึ้น ~0.5°C/3s
-- Stopped → อุณหภูมิลง ~0.3°C/3s
-- Warning เมื่อ temp > 80°C
-
-### Multi-Parameter Simulation
-แต่ละ machine parameters อัพเดทอัตโนมัติเมื่อ running:
-```javascript
-motor1.current     += random(0, 2) A    (max 30A)
-motor1.voltage     = 380 + random(0, 5) V
-agv1.battery       -= random(0, 0.1) %
-heater1.targetTemp = speed × 1.8 °C
-compressor1.pressure = speed × 1.2 PSI
-```
+- เชื่อมต่อกับอุปกรณ์ฮาร์ดแวร์จริง เช่น การใช้งานไลบรารี `pymodbus` หรือ `node-opcua`
+- จัดเก็บข้อมูลใน Persistent Storage เช่น SQLite หรือ PostgreSQL สำหรับเก็บบันทึกคำสั่งและสถานะย้อนหลัง
+- อัพเกรดการดึงข้อมูลจากเดิมที่เป็นแบบ Polling ทุก 3 วินาทีไปใช้งาน WebSocket แบบ Real-time
+- รองรับการเชื่อมต่อกับ PLC หลากหลายรุ่นเพิ่มเติมนอกเหนือจากที่จำลองไว้
 
 ---
 
-## 🔧 การปรับแต่ง
+## การอนุญาต (License)
 
-### เพิ่ม Machine ใหม่ (ง่ายมาก — ไม่ต้องแก้ code)
-
-1. เพิ่มใน `config/plcs.json`:
-```json
-{
-  "id": "myMachine1",
-  ...
-}
-```
-
-2. เพิ่มใน `config/machines.json`:
-```json
-{
-  "id": "myMachine1",
-  "name": "เครื่องจักรใหม่",
-  "plcId": "plc-main",
-  "additionalParams": {
-    "speed":     { "value": 0, "unit": "%" },
-    "temperature": { "value": 0, "unit": "°C" }
-  },
-  ...
-}
-```
-
-3. Restart backend → Dashboard แสดงอัตโนมัติ! ✅
-
----
-
-## 🏗️ Architecture Diagram
-
-```
-┌─────────────┐     HTTP/REST      ┌──────────────┐
-│   Frontend   │ ◄───────────────► │  Backend API  │
-│   (React)    │                    │  (Express)    │
-└─────────────┘                    └──────┬───────┘
-     │                                     │
-     │           3-second polling           ▼
-     │                            ┌───────────────┐
-     │                            │  Services      │
-     │                            │  ├── machineState
-     │                            │  ├── plcSimulator
-     │                            │  ├── gatewayService
-     │                            │  ├── ollamaService
-     │                            │  └── vocabularyService
-     │                            └───────┬───────┘
-     ▼                                    │
-┌─────────────┐                    Simulated
-│  Dashboard   │ ◄──────────────────── PLC States
-│  Real-time   │                        (12 Machines)
-└─────────────┘
-```
-
----
-
-## 📁 โครงสร้างไฟล์สำคัญ
-
-```
-backend/
-├── config/
-│   ├── plcs.json              ← PLC configs (แก้ไขเพิ่มได้)
-│   └── machines.json          ← Machine configs (แก้ไขเพิ่มได้)
-├── services/
-│   ├── plcSimulator.js        ← PLC simulation engine (ใหม่!)
-│   ├── machineState.js        ← Multi-PLC state manager
-│   ├── gatewayService.js      ← Gateway + PLC info API
-│   └── ... (existing services)
-
-frontend/src/
-├── components/
-│   ├── MachineStatus.jsx      ← Dashboard + PLC Summary Cards
-│   ├── MachineStatus.css      ← PLC grid styles (ใหม่!)
-│   ├── GatewayMonitor.jsx     ← Enhanced with Multi-PLC
-│   └── ... (existing components)
-└── services/
-    └── api.js                 ← PLC endpoints (ใหม่!)
-```
-
----
-
-## ⚠️ ข้อจำกัดของ Prototype
-
-| ข้อจำกัด | รายละเอียด |
-|---------|-----------|
-| ❌ ไม่มี Hardware จริง | ทุกอย่าง simulation |
-| ❌ State จะหายเมื่อ restart | In-memory เท่านั้น |
-| ⚠️ Ollama จำเป็น | สำหรับ AI (vocab-first ไม่ต้องการ) |
-| ⚠️ MQTT simulate mode | ไม่ได้ส่งไป broker จริง |
-
----
-
-## 🔮 Next Steps (พัฒนาต่อ)
-
-1. **เชื่อมต่อ PLC จริง** → ใช้ `pymodbus` หรือ `node-opcua`
-2. **Persistent Storage** → SQLite/PostgreSQL สำหรับ history
-3. **WebSocket Real-time** → แทนที่ 3s polling
-4. **เพิ่ม Multi-PLC ได้ไม่จำกัด** → แก้ config เท่านั้น
-
----
-
-## 📄 License
-
-MIT — สำหรับ prototype/demonstration purposes
+MIT License - เหมาะสำหรับใช้งานเป็นต้นแบบและศึกษาทดลอง

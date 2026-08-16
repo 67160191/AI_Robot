@@ -1,0 +1,547 @@
+/* ============================================================
+   ConveyorPanel.css — Factory I/O Conveyor 1 Modbus Control UI
+   ============================================================ */
+
+.conveyor-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px 0;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* ── Header ── */
+.cp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cp-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cp-icon {
+  font-size: 2rem;
+  filter: drop-shadow(0 0 8px rgba(0, 200, 150, 0.5));
+}
+
+.cp-title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+  letter-spacing: 0.02em;
+}
+
+.cp-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted, #888);
+}
+
+.cp-modbus-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 99px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid;
+  transition: all 0.3s;
+}
+
+.cp-modbus-badge.connected {
+  background: rgba(0, 200, 150, 0.1);
+  border-color: rgba(0, 200, 150, 0.4);
+  color: #00c896;
+}
+
+.cp-modbus-badge.disconnected {
+  background: rgba(255, 80, 80, 0.08);
+  border-color: rgba(255, 80, 80, 0.3);
+  color: #ff5050;
+}
+
+.cp-host {
+  font-size: 0.72rem;
+  opacity: 0.7;
+}
+
+.cp-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.cp-dot.pulse {
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.7); }
+}
+
+/* ── Belt Visualizer ── */
+.cp-visualizer {
+  position: relative;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 20px 16px;
+  overflow: hidden;
+}
+
+.cp-belt-track {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cp-belt-label-left,
+.cp-belt-label-right {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted, #888);
+  letter-spacing: 0.1em;
+  width: 48px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.cp-belt-wrap {
+  flex: 1;
+  position: relative;
+  height: 60px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.3);
+  border: 2px solid rgba(255,255,255,0.08);
+}
+
+.cp-belt {
+  display: flex;
+  width: 200%;
+  height: 100%;
+  transition: none;
+}
+
+.cp-belt.running {
+  animation: beltMove 1.2s linear infinite;
+}
+
+@keyframes beltMove {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.cp-belt-stripe {
+  flex-shrink: 0;
+  width: 40px;
+  height: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255,255,255,0.06) 0px,
+    rgba(255,255,255,0.06) 20px,
+    rgba(255,255,255,0.02) 20px,
+    rgba(255,255,255,0.02) 40px
+  );
+}
+
+/* Box animation on conveyor */
+.cp-box-container {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 100%;
+  pointer-events: none;
+}
+
+.cp-box {
+  position: absolute;
+  font-size: 1.5rem;
+  animation: boxMove 3s linear infinite;
+}
+
+.cp-box:nth-child(2) {
+  animation-delay: 1.5s;
+}
+
+@keyframes boxMove {
+  from { left: -10%;  opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  to   { left: 105%; opacity: 0; }
+}
+
+/* Status pill overlay */
+.cp-status-pill {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  transition: all 0.4s;
+}
+
+.cp-status-pill.on {
+  background: rgba(0, 200, 150, 0.15);
+  border: 1px solid rgba(0, 200, 150, 0.5);
+  color: #00c896;
+}
+
+.cp-status-pill.off {
+  background: rgba(160, 160, 160, 0.1);
+  border: 1px solid rgba(160, 160, 160, 0.2);
+  color: #a0a0a0;
+}
+
+.cp-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.cp-status-dot.pulse-green {
+  animation: greenPulse 1s ease-in-out infinite;
+}
+
+@keyframes greenPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0,200,150,0.6); }
+  50%       { box-shadow: 0 0 0 6px rgba(0,200,150,0); }
+}
+
+/* ── Info Grid ── */
+.cp-info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.cp-info-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.cp-info-card.on {
+  background: rgba(0, 200, 150, 0.06);
+  border-color: rgba(0, 200, 150, 0.25);
+}
+
+.cp-info-card.off {
+  opacity: 0.7;
+}
+
+.cp-info-label {
+  font-size: 0.68rem;
+  color: var(--text-muted, #888);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.cp-info-val {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+}
+
+.text-green  { color: #00c896 !important; }
+.text-red    { color: #ff5050 !important; }
+.text-yellow { color: #ffcc00 !important; }
+.text-muted  { color: #666 !important; }
+
+/* ── Control Buttons ── */
+.cp-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 12px;
+}
+
+.cp-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 16px 12px;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.cp-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.2s;
+  background: rgba(255,255,255,0.06);
+}
+
+.cp-btn:hover:not(:disabled)::before { opacity: 1; }
+.cp-btn:active:not(:disabled) { transform: scale(0.97); }
+
+.cp-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.cp-btn-icon {
+  font-size: 1.4rem;
+}
+
+.cp-btn-sub {
+  font-size: 0.65rem;
+  font-weight: 400;
+  opacity: 0.65;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.04em;
+}
+
+/* Start button */
+.cp-btn-start {
+  background: rgba(0, 200, 150, 0.12);
+  border-color: rgba(0, 200, 150, 0.35);
+  color: #00c896;
+}
+.cp-btn-start:hover:not(:disabled) {
+  background: rgba(0, 200, 150, 0.22);
+  border-color: rgba(0, 200, 150, 0.6);
+  box-shadow: 0 0 20px rgba(0, 200, 150, 0.2);
+}
+.cp-btn-start.active {
+  background: rgba(0, 200, 150, 0.2);
+  border-color: #00c896;
+  box-shadow: 0 0 16px rgba(0, 200, 150, 0.3);
+  animation: startGlow 2s ease-in-out infinite;
+}
+
+@keyframes startGlow {
+  0%, 100% { box-shadow: 0 0 16px rgba(0, 200, 150, 0.3); }
+  50%       { box-shadow: 0 0 28px rgba(0, 200, 150, 0.55); }
+}
+
+/* Stop button */
+.cp-btn-stop {
+  background: rgba(255, 80, 80, 0.1);
+  border-color: rgba(255, 80, 80, 0.3);
+  color: #ff5050;
+}
+.cp-btn-stop:hover:not(:disabled) {
+  background: rgba(255, 80, 80, 0.2);
+  border-color: rgba(255, 80, 80, 0.6);
+  box-shadow: 0 0 20px rgba(255, 80, 80, 0.2);
+}
+.cp-btn-stop.active {
+  background: rgba(255, 80, 80, 0.18);
+  border-color: #ff5050;
+}
+
+/* Reconnect button */
+.cp-btn-reconnect {
+  background: rgba(79, 158, 255, 0.1);
+  border-color: rgba(79, 158, 255, 0.3);
+  color: #4f9eff;
+  min-width: 100px;
+}
+.cp-btn-reconnect:hover:not(:disabled) {
+  background: rgba(79, 158, 255, 0.18);
+  border-color: rgba(79, 158, 255, 0.55);
+}
+
+/* Spinner */
+.cp-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Frame Info ── */
+.cp-frame-info {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.07);
+}
+
+.cp-frame-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted, #888);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+
+.cp-frame-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cp-frame-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cp-frame-key {
+  font-size: 0.75rem;
+  color: var(--text-muted, #888);
+  width: 160px;
+  flex-shrink: 0;
+}
+
+.cp-frame-val {
+  font-size: 0.78rem;
+  color: var(--text-primary, #ddd);
+}
+
+/* ── Activity Log ── */
+.cp-log-section {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  overflow: hidden;
+  flex: 1;
+  min-height: 140px;
+  max-height: 180px;
+  display: flex;
+  flex-direction: column;
+}
+
+.cp-log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted, #888);
+  background: rgba(255,255,255,0.02);
+}
+
+.cp-log-clear {
+  background: none;
+  border: none;
+  color: var(--text-muted, #888);
+  cursor: pointer;
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.cp-log-clear:hover {
+  background: rgba(255,255,255,0.08);
+  color: var(--text-primary, #fff);
+}
+
+.cp-log-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.cp-log-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-muted, #888);
+  font-size: 0.8rem;
+}
+
+.cp-log-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 4px 14px;
+  font-size: 0.78rem;
+  border-left: 2px solid transparent;
+  transition: background 0.2s;
+}
+
+.cp-log-entry:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+.cp-log-entry.log-success {
+  border-left-color: #00c896;
+  color: #00c896;
+}
+
+.cp-log-entry.log-error {
+  border-left-color: #ff5050;
+  color: #ff5050;
+}
+
+.cp-log-entry.log-pending {
+  border-left-color: #4f9eff;
+  color: #4f9eff;
+}
+
+.cp-log-entry.log-info {
+  border-left-color: transparent;
+  color: var(--text-muted, #888);
+}
+
+.cp-log-time {
+  color: #555;
+  flex-shrink: 0;
+  font-size: 0.72rem;
+}
+
+.cp-log-msg {
+  flex: 1;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .cp-info-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .cp-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cp-btn-reconnect {
+    grid-column: 1 / -1;
+  }
+}

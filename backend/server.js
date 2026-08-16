@@ -73,7 +73,10 @@ app.listen(PORT, () => {
   console.log(`  POST http://localhost:${PORT}/api/command`);
   console.log(`  GET  http://localhost:${PORT}/api/command/status`);
   console.log(`  GET  http://localhost:${PORT}/api/command/history`);
-  console.log(`  GET  http://localhost:${PORT}/api/command/models\n`);
+  console.log(`  GET  http://localhost:${PORT}/api/command/models`);
+  console.log(`  GET  http://localhost:${PORT}/api/command/conveyor1/status`);
+  console.log(`  POST http://localhost:${PORT}/api/command/conveyor1/start`);
+  console.log(`  POST http://localhost:${PORT}/api/command/conveyor1/stop\n`);
 
   // 🔥 Warm-up: โหลด model เข้า memory ล่วงหน้า
   setTimeout(() => ollamaService.warmUp(), 2000);

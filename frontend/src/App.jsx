@@ -8,10 +8,13 @@ import CommandHistory from './components/CommandHistory';
 import ModelSelector from './components/ModelSelector';
 import VocabPanel from './components/VocabPanel';
 import GatewayMonitor from './components/GatewayMonitor';
+import ConveyorPanel from './components/ConveyorPanel';
 import './App.css';
 
 const TABS = [
   { id: 'dashboard', label: '📊', desc: 'Dashboard' },
+  { id: 'conveyor1', label: '🏭', desc: 'สายพาน 1' },
+  { id: 'conveyor2', label: '🏭', desc: 'สายพาน 2' },
   { id: 'history',   label: '📋', desc: 'History'  },
   { id: 'vocab',     label: '📚', desc: 'คลังคำ'  },
 ];
@@ -76,10 +79,16 @@ export default function App() {
           />
         </section>
 
-        {/* Right — Dashboard / History / Vocab */}
+        {/* Right — Dashboard / History / Vocab / Conveyor */}
         <section className="right-section">
           {activeTab === 'dashboard' && (
             <MachineStatus refreshTrigger={refreshTrigger} onCommandResult={handleCommandResult} />
+          )}
+          {activeTab === 'conveyor1' && (
+            <ConveyorPanel deviceId="conveyor1" title="สายพาน 1" />
+          )}
+          {activeTab === 'conveyor2' && (
+            <ConveyorPanel deviceId="conveyor2" title="สายพาน 2" />
           )}
           {activeTab === 'history' && (
             <CommandHistory refreshTrigger={refreshTrigger} />

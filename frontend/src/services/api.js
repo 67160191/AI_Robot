@@ -55,5 +55,11 @@ export const api = {
   deleteAlias: (type, key)           => request('DELETE', '/command/vocab/alias', { type, key }),
 
   // ── Scenario Simulation ──
-  triggerScenario: (type = 'emergency') => request('POST', '/command/scenario', { type })
+  triggerScenario: (type = 'emergency') => request('POST', '/command/scenario', { type }),
+
+  // Factory I/O (Conveyor specific endpoints)
+  getDeviceStatus: (deviceId) => request('GET', `/command/${deviceId}/status`),
+  startDevice:     (deviceId) => request('POST', `/command/${deviceId}/start`),
+  stopDevice:      (deviceId) => request('POST', `/command/${deviceId}/stop`),
+  reconnectModbus: ()         => request('POST', '/command/modbus/reconnect'),
 };

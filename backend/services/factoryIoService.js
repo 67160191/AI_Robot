@@ -8,78 +8,110 @@ const client = new ModbusRTU();
 // Factory I/O Modbus Server Settings
 const FACTORY_IO_IP = process.env.FACTORY_IO_IP || '127.0.0.1';
 const FACTORY_IO_PORT = 502;
+const MODBUS_SLAVE_ID = 1;
 
 let isConnected = false;
+let reconnectTimer = null;
+let syncInterval = null;
 
 // ─── Default Coil Mapping ────────────────────────────────
-// แมปชื่อ Device ID กับตำแหน่ง Coil (Output) ใน Factory I/O
-// คุณสามารถแก้ Coil Address ตรงนี้ให้ตรงกับ Scene ใน Factory I/O ได้
 const DEVICE_COIL_MAP = {
   'conveyor1': 0,
   'conveyor2': 1,
   'conveyor3': 2,
-  'motor1': 3,
-  'heater1': 4,
-  'agv1': 5,
+  'motor1':    3,
+  'heater1':   4,
+  'agv1':      5,
   'compressor1': 6
 };
 
-/**
- * เชื่อมต่อไปยัง Factory I/O Modbus Server
- */
+// เก็บ State ปัจจุบัน (In-memory)
+const deviceStates = {};
+Object.keys(DEVICE_COIL_MAP).forEach(k => deviceStates[k] = false);
+
+// ─── Cyclic Sync (เหมือน PLC จริง) ────────────────────────
+// จะส่งค่าไปให้ Factory I/O ตลอดเวลา ป้องกันปัญหา Timeout/Disconnect
+const syncToFactoryIO = async () => {
+  if (!isConnected) return;
+  try {
+    // 1. ส่งค่า Digital (Coils)
+    let coils = [false, false, false, false, false, false, false];
+    Object.entries(DEVICE_COIL_MAP).forEach(([dev, idx]) => {
+      coils[idx] = deviceStates[dev] === true;
+    });
+    await client.writeCoils(0, coils);
+
+    // 2. ส่งค่า Analog (Holding Registers) 
+    // เผื่อผู้ใช้เผลอใช้สายพานแบบ Analog (0-10V -> 0-1000)
+    let registers = coils.map(c => c ? 1000 : 0);
+    try { await client.writeRegisters(0, registers); } catch(e) {}
+
+  } catch (err) {
+    console.error(`[Factory I/O] ❌ Sync Error:`, err.message);
+    isConnected = false;
+    if (syncInterval) clearInterval(syncInterval);
+    reconnectTimer = setTimeout(connect, 2000);
+  }
+};
+
+// ─── เชื่อมต่อ ──────────────────────────────────────────
 const connect = () => {
-  console.log(`[Factory I/O] Attempting to connect to Modbus TCP at ${FACTORY_IO_IP}:${FACTORY_IO_PORT}...`);
-  
+  if (reconnectTimer) clearTimeout(reconnectTimer);
+  if (syncInterval) clearInterval(syncInterval);
+
+  console.log(`[Factory I/O] 🔌 Connecting to Modbus TCP ${FACTORY_IO_IP}:${FACTORY_IO_PORT} ...`);
+  try { client.close(); } catch (_) {}
+
   client.connectTCP(FACTORY_IO_IP, { port: FACTORY_IO_PORT })
     .then(() => {
       isConnected = true;
-      client.setID(1); // Default Modbus Unit ID
-      console.log(`[Factory I/O] ✅ Connected successfully!`);
+      client.setID(MODBUS_SLAVE_ID);
+      console.log(`[Factory I/O] ✅ Connected! Starting 100ms cyclic sync.`);
+      // เริ่มยิงข้อมูลทุกๆ 100ms แบบ PLC
+      syncInterval = setInterval(syncToFactoryIO, 100);
     })
     .catch((err) => {
       isConnected = false;
-      console.log(`[Factory I/O] ❌ Connection failed: ${err.message}. Retrying in 5s...`);
-      setTimeout(connect, 5000);
+      console.log(`[Factory I/O] ❌ Connection failed: ${err.message}. Retry in 5s...`);
+      reconnectTimer = setTimeout(connect, 5000);
     });
 };
 
-/**
- * ควบคุมสถานะเครื่องจักรใน Factory I/O
- * @param {string} deviceId - เช่น 'conveyor1'
- * @param {boolean} state - true (เปิด) / false (ปิด)
- */
+// ─── เขียน Coil (Output) ─────────────────────────────────
 const writeDeviceState = async (deviceId, state) => {
-  if (!isConnected) {
-    console.log(`[Factory I/O] ⚠️ Not connected. Skipped command for ${deviceId}`);
-    return false;
-  }
-
-  const coilAddress = DEVICE_COIL_MAP[deviceId];
+  if (DEVICE_COIL_MAP[deviceId] === undefined) return false;
   
-  if (coilAddress !== undefined) {
-    try {
-      await client.writeCoil(coilAddress, state);
-      console.log(`[Factory I/O] 🟢 Wrote Coil ${coilAddress} for ${deviceId} -> ${state ? 'ON' : 'OFF'}`);
-      return true;
-    } catch (err) {
-      console.error(`[Factory I/O] ❌ Failed to write Coil ${coilAddress}:`, err.message);
-      // ถ้าเขียนล้มเหลว อาจจะหลุดการเชื่อมต่อ ให้พยายามต่อใหม่
-      isConnected = false;
-      setTimeout(connect, 2000);
-      return false;
-    }
-  } else {
-    console.log(`[Factory I/O] ⚠️ No coil mapping found for device: ${deviceId}`);
-    return false;
-  }
+  // อัพเดท In-memory state, เดี๋ยว Cyclic Sync จะดึงไปเขียนเอง
+  deviceStates[deviceId] = state;
+  console.log(`[Factory I/O] 🟢 Set [${deviceId}] → ${state ? 'ON' : 'OFF'}`);
+  return true;
 };
 
-/**
- * หยุดการเชื่อมต่อ (สำหรับ Shutdown)
- */
-const disconnect = () => {
+// ─── อ่านสถานะของเครื่องจักร ────────────────────────────
+const getDeviceStatus = async (deviceId) => {
+  let sensorInput0 = null;
+  let sensorInput1 = null;
+
   if (isConnected) {
-    client.close();
+    try {
+      const res = await client.readDiscreteInputs(0, 2);
+      sensorInput0 = res.data[0];
+      sensorInput1 = res.data[1];
+    } catch(e) {}
+  }
+  
+  return { 
+    coilState: deviceStates[deviceId], 
+    sensorInput0, 
+    sensorInput1 
+  };
+};
+
+const disconnect = () => {
+  if (reconnectTimer) clearTimeout(reconnectTimer);
+  if (syncInterval) clearInterval(syncInterval);
+  if (isConnected) {
+    try { client.close(); } catch (_) {}
     isConnected = false;
     console.log(`[Factory I/O] 🛑 Disconnected.`);
   }
@@ -87,8 +119,10 @@ const disconnect = () => {
 
 module.exports = {
   connect,
-  writeDeviceState,
   disconnect,
+  writeDeviceState,
+  getDeviceStatus,
   isConnected: () => isConnected,
   getDeviceMap: () => DEVICE_COIL_MAP
 };
+

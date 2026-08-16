@@ -5,12 +5,13 @@
 
 const express = require("express");
 const router  = express.Router();
-const ollamaService  = require("../services/ollamaService");
-const mqttService    = require("../services/mqttService");
-const machineState   = require("../services/machineState");
-const historyService = require("../services/historyService");
-const vocabService   = require("../services/vocabularyService");
-const gatewayService = require("../services/gatewayService");
+const ollamaService    = require("../services/ollamaService");
+const mqttService      = require("../services/mqttService");
+const machineState     = require("../services/machineState");
+const historyService   = require("../services/historyService");
+const vocabService     = require("../services/vocabularyService");
+const gatewayService   = require("../services/gatewayService");
+const factoryIoService = require("../services/factoryIoService");
 
 // ─────────────────────────────────────────────────────────
 // POST /api/command — Parse เท่านั้น (ไม่ execute)
@@ -301,6 +302,112 @@ router.post("/scenario", (req, res) => {
     console.error("Scenario error:", error);
     res.status(500).json({ error: error.message });
   }
+});
+
+// ─── FACTORY I/O — Generic Device Modbus TCP Endpoints ────────────────
+// ─────────────────────────────────────────────────────────
+
+// GET /api/command/:deviceId/status — อ่านสถานะจาก Modbus จริง
+router.get("/:deviceId/status", async (req, res) => {
+  const { deviceId } = req.params;
+  try {
+    const connected = factoryIoService.isConnected();
+    let coilState = null;
+    let sensorInput0 = null;
+    let sensorInput1 = null;
+
+    if (connected) {
+      const status = await factoryIoService.getDeviceStatus(deviceId);
+      coilState    = status.coilState;
+      sensorInput0 = status.sensorInput0;
+      sensorInput1 = status.sensorInput1;
+    }
+
+    const machine = machineState.get(deviceId);
+    const coilMap = factoryIoService.getDeviceMap();
+
+    res.json({
+      deviceId:     deviceId,
+      modbusConnected: connected,
+      modbusHost:   process.env.FACTORY_IO_IP || '127.0.0.1',
+      modbusPort:   502,
+      slaveId:      1,
+      coilAddress:  coilMap[deviceId],
+      coilState:    coilState,
+      sensorInput0: sensorInput0,
+      sensorInput1: sensorInput1,
+      machineStatus: machine?.status || 'unknown',
+      machineName:  machine?.name || deviceId,
+      timestamp:    new Date().toISOString()
+    });
+  } catch (err) {
+    console.error(`[${deviceId}] GET status error:`, err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/command/:deviceId/start
+router.post("/:deviceId/start", async (req, res) => {
+  const { deviceId } = req.params;
+  try {
+    const modbusOk = await factoryIoService.writeDeviceState(deviceId, true);
+    const machineResult = machineState.execute(deviceId, 'start', {});
+    const coilAddress = factoryIoService.getDeviceMap()[deviceId];
+    
+    historyService.add({
+      userMessage: `[Factory IO] Start ${deviceId}`,
+      aiMessage: `เปิด ${deviceId} ผ่าน Modbus TCP`,
+      device: deviceId, action: 'start', params: {},
+      model: 'modbus', source: 'direct', executed: true, success: modbusOk
+    });
+
+    res.json({
+      success: modbusOk,
+      modbusWritten: modbusOk,
+      coilAddress: coilAddress,
+      coilState: true,
+      machineResult,
+      message: modbusOk ? `✅ เปิด ${deviceId} แล้ว (Coil ${coilAddress} = ON)` : '⚠️ Modbus ไม่ได้เชื่อมต่อ',
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/command/:deviceId/stop
+router.post("/:deviceId/stop", async (req, res) => {
+  const { deviceId } = req.params;
+  try {
+    const modbusOk = await factoryIoService.writeDeviceState(deviceId, false);
+    const machineResult = machineState.execute(deviceId, 'stop', {});
+    const coilAddress = factoryIoService.getDeviceMap()[deviceId];
+
+    historyService.add({
+      userMessage: `[Factory IO] Stop ${deviceId}`,
+      aiMessage: `ปิด ${deviceId} ผ่าน Modbus TCP`,
+      device: deviceId, action: 'stop', params: {},
+      model: 'modbus', source: 'direct', executed: true, success: modbusOk
+    });
+
+    res.json({
+      success: modbusOk,
+      modbusWritten: modbusOk,
+      coilAddress: coilAddress,
+      coilState: false,
+      machineResult,
+      message: modbusOk ? `✅ ปิด ${deviceId} แล้ว (Coil ${coilAddress} = OFF)` : '⚠️ Modbus ไม่ได้เชื่อมต่อ',
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/command/modbus/reconnect
+router.post("/modbus/reconnect", (req, res) => {
+  factoryIoService.connect();
+  res.json({ success: true, message: 'กำลังเชื่อมต่อ Factory I/O ใหม่...' });
 });
 
 module.exports = router;
