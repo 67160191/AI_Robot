@@ -27,7 +27,7 @@ router.post("/", async (req, res) => {
     // ── ⚡ Vocab-First: ตรวจ vocab ก่อน ส่งไป AI ──────────────────
     // ถ้า match → return ทันที (~0ms) ไม่ต้องเรียก Ollama เลย
     const vocabResult = vocabService.searchVocab(message);
-    if (vocabResult && vocabResult.found && vocabResult.source === "custom_command") {
+    if (vocabResult && vocabResult.found && (vocabResult.source === "custom_command" || vocabResult.confidence === 1)) {
       console.log(`⚡ Custom Command match: ${vocabResult.device} / ${vocabResult.action}`);
       const record = historyService.add({
         userMessage: message,
@@ -110,6 +110,14 @@ router.post("/execute", async (req, res) => {
 
   const machineResult = machineState.execute(device, action, params);
   const mqttResult    = mqttService.publish(device, action, params);
+  
+  // ซิงค์สถานะไปที่ Factory I/O (Modbus)
+  if (action === "start" || action === "on" || (action === "set_speed" && params.speed > 0)) {
+    factoryIoService.writeDeviceState(device, true);
+  } else if (action === "stop" || action === "off" || (action === "set_speed" && params.speed === 0)) {
+    factoryIoService.writeDeviceState(device, false);
+  }
+
   const gatewayLog    = gatewayService.recordGatewayTransaction({
     device, action, params, userMessage: userMessage || `[Execute] ${action} ${device}`, source: "ai"
   });
@@ -141,6 +149,14 @@ router.post("/direct", async (req, res) => {
 
   const machineResult = machineState.execute(device, action, params);
   const mqttResult    = mqttService.publish(device, action, params);
+  
+  // ซิงค์สถานะไปที่ Factory I/O (Modbus)
+  if (action === "start" || action === "on" || (action === "set_speed" && params.speed > 0)) {
+    factoryIoService.writeDeviceState(device, true);
+  } else if (action === "stop" || action === "off" || (action === "set_speed" && params.speed === 0)) {
+    factoryIoService.writeDeviceState(device, false);
+  }
+
   const gatewayLog    = gatewayService.recordGatewayTransaction({
     device, action, params, userMessage: `[Quick] ${action} ${device}`, source: "direct"
   });

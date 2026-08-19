@@ -312,18 +312,22 @@ function searchVocab(message) {
   let textForSpeed = matchedDeviceKey ? lower.replace(new RegExp(matchedDeviceKey, "gi"), "") : lower;
   textForSpeed = textForSpeed.replace(/e-stop|estop/gi, "");
 
-  const allNums = [...textForSpeed.matchAll(/(\d+)/g)].map(m => parseInt(m[1], 10));
-  let speedVal = allNums.length > 0 ? allNums[allNums.length - 1] : null;
+  const hasSpeedKeyword = /ความเร็ว|สปีด|speed|ระดับ|แรงดัน|อุณหภูมิ|ความร้อน|ความเย็น|เปอร์เซ็น|%|เป็น/.test(lower) || foundAction === "set_speed";
 
-  if (speedVal === null) {
-    if (/เต็มที่|เต็มร้อย|สูงสุด|สุดๆ|สุดกำลัง|ร้อยเปอร์เซ็น|แม็กซ์|แรงสุด|ร้อยเปอ|เต็มแม็ก|เต็มพิกัด/.test(textForSpeed)) speedVal = 100;
-    else if (/ครึ่งนึง|ครึ่งหนึ่ง|ห้าสิบ/.test(textForSpeed)) speedVal = 50;
-    else if (/เบาๆ|นิดเดียว|ต่ำสุด|น้อยสุด|ช้าๆ/.test(textForSpeed)) speedVal = 20;
-  }
+  if (hasSpeedKeyword) {
+    const allNums = [...textForSpeed.matchAll(/(\d+)/g)].map(m => parseInt(m[1], 10));
+    let speedVal = allNums.length > 0 ? allNums[allNums.length - 1] : null;
 
-  if (speedVal !== null && speedVal >= 0 && speedVal <= 100) {
-    params.speed = speedVal;
-    if (foundAction === "start" || foundAction === "chat") foundAction = "set_speed";
+    if (speedVal === null) {
+      if (/เต็มที่|เต็มร้อย|สูงสุด|สุดๆ|สุดกำลัง|ร้อยเปอร์เซ็น|แม็กซ์|แรงสุด|ร้อยเปอ|เต็มแม็ก|เต็มพิกัด/.test(textForSpeed)) speedVal = 100;
+      else if (/ครึ่งนึง|ครึ่งหนึ่ง|ห้าสิบ/.test(textForSpeed)) speedVal = 50;
+      else if (/เบาๆ|นิดเดียว|ต่ำสุด|น้อยสุด|ช้าๆ/.test(textForSpeed)) speedVal = 20;
+    }
+
+    if (speedVal !== null && speedVal >= 0 && speedVal <= 100) {
+      params.speed = speedVal;
+      if (foundAction === "start" || foundAction === "chat") foundAction = "set_speed";
+    }
   }
 
   if (foundDevice && foundAction !== "chat") {

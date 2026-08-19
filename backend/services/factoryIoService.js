@@ -34,16 +34,24 @@ Object.keys(DEVICE_COIL_MAP).forEach(k => deviceStates[k] = false);
 const syncToFactoryIO = async () => {
   if (!isConnected) return;
   try {
-    // 1. ส่งค่า Digital (Coils)
-    let coils = [false, false, false, false, false, false, false];
-    Object.entries(DEVICE_COIL_MAP).forEach(([dev, idx]) => {
-      coils[idx] = deviceStates[dev] === true;
-    });
-    await client.writeCoils(0, coils);
+    // 1. ส่งค่า Digital (Coils) - ใช้ FC5 (Write Single Coil) ทีละตัวตามที่ UI ระบุ
+    for (const [dev, idx] of Object.entries(DEVICE_COIL_MAP)) {
+      const state = deviceStates[dev] === true;
+      try {
+        await client.writeCoil(idx, state);
+      } catch (err) {
+        // fail silently for individual coil to prevent crashing if Factory I/O count < 7
+        // console.warn(`[Factory I/O] Warning: Could not write coil ${idx}:`, err.message);
+      }
+    }
 
     // 2. ส่งค่า Analog (Holding Registers) 
     // เผื่อผู้ใช้เผลอใช้สายพานแบบ Analog (0-10V -> 0-1000)
-    let registers = coils.map(c => c ? 1000 : 0);
+    let registers = [];
+    for (let i = 0; i < 7; i++) {
+        let dev = Object.keys(DEVICE_COIL_MAP).find(key => DEVICE_COIL_MAP[key] === i);
+        registers[i] = (dev && deviceStates[dev]) ? 1000 : 0;
+    }
     try { await client.writeRegisters(0, registers); } catch(e) {}
 
   } catch (err) {
